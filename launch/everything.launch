@@ -33,7 +33,7 @@
 
   <!-- Mavros -->
   <arg name="ns" default="/"/>
-  <arg name="fcu_url" default="/dev/ttyUSB0:500000"/>
+  <arg name="fcu_url" default="/dev/ttyUSB1:500000"/>
   <arg name="gcs_url" default="" />   <!-- GCS link is provided by SITL -->
   <arg name="tgt_system" default="1" />
   <arg name="tgt_component" default="1" />

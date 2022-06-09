@@ -15,6 +15,10 @@ from pynput import keyboard
 
 from sensor_msgs.msg import LaserScan
 
+from stable_baselines3.ppo.policies import MlpPolicy
+from stable_baselines3.common.utils import get_device
+import torch
+
 
 class Modes:
     POSITION_CONTROL = 0
@@ -64,7 +68,13 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
         self.laser_ranges = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
         self.laser_data = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
 
-        self.model = PPO.load("vec_model6")
+        device = get_device("auto")
+        saved_variables = torch.load("ppo8_policy", map_location=device)
+
+        self.model = MlpPolicy(**saved_variables["data"])
+        self.model.load_state_dict(saved_variables["state_dict"], strict=False)
+        self.model.to(device)
+
 
         self.yaw_i = 0
         self.yaw_p = 1
