@@ -56,3 +56,4 @@ class Laser:
         return cv2.waitKey(1)
 
 
+laser = Laser()
