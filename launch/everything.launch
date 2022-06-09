@@ -1,0 +1,63 @@
+<launch>
+  <!-- Realsense -->
+  <node pkg="tf" type="static_transform_publisher" name="tf_baseLink_cameraPose"
+        args="0 0 0 0 1.5708 0 base_link camera_pose_frame 1000"/>
+
+  <!-- Launch static transform publishers -->
+  <node pkg="tf" type="static_transform_publisher" name="tf_odom_cameraOdom"
+        args="0 0 0 0 0 0 odom camera_odom_frame 1000"/>
+
+  <node name="odom_throttler" type="drop" pkg="topic_tools" 
+    args="/camera/odom/sample 7 8 /camera/odom/sample_throttled" >
+  </node>
+
+  <include file="$(find realsense2_camera)/launch/rs_t265.launch" >
+    <arg name="enable_fisheye1"          value="false"/>
+    <arg name="enable_fisheye2"          value="false"/>
+    <arg name="fisheye_fps"              value="-1"/>
+    <arg name="gyro_fps"                 value="-1"/>
+    <arg name="accel_fps"                value="-1"/>
+    <arg name="enable_gyro"              value="false"/>
+    <arg name="enable_accel"             value="false"/>
+    <arg name="publish_odom_tf"          value="false"/>
+  </include>
+
+  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find px4_realsense_bridge)/resource/custom_rosconsole.conf"/>
+
+  <arg name="input_topic" default="[/camera/odom/sample]"/>
+
+  <node name="px4_realsense_bridge_node" pkg="px4_realsense_bridge" type="px4_realsense_bridge_node" output="screen" >
+    <rosparam param="input_topic" subst_value="True">$(arg input_topic)</rosparam>
+  </node>
+
+
+  <!-- Mavros -->
+  <arg name="ns" default="/"/>
+  <arg name="fcu_url" default="/dev/ttyUSB0:500000"/>
+  <arg name="gcs_url" default="" />   <!-- GCS link is provided by SITL -->
+  <arg name="tgt_system" default="1" />
+  <arg name="tgt_component" default="1" />
+
+  <group ns="$(arg ns)">
+      <include file="$(find mavros)/launch/node.launch">
+          <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
+          <!-- Need to change the config file to get the tf topic and get local position in terms of local origin -->
+          <arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
+          <arg name="fcu_url" value="$(arg fcu_url)" />
+          <arg name="gcs_url" value="$(arg gcs_url)" />
+          <arg name="tgt_system" value="$(arg tgt_system)" />
+          <arg name="tgt_component" value="$(arg tgt_component)" />
+      </include>
+  </group>
+
+
+  <!-- Lidar -->
+  <include file="$(find rplidar_ros)/launch/rplidar.launch">
+    <arg name="serial_port"         type="string" value="/dev/ttyUSB0"/>
+    <arg name="serial_baudrate"     type="int"    value="115200"/>
+    <arg name="frame_id"            type="string" value="laser"/>
+    <arg name="inverted"            type="bool"   value="false"/>
+    <arg name="angle_compensate"    type="bool"   value="true"/>
+  </include>
+
+</launch>
