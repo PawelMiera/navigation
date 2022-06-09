@@ -52,6 +52,6 @@
 
 
   <!-- Lidar -->
-  <include file="$(find rplidar_ros)/launch/rplidar.launch"></include>
+  <include file="$(find navigation)/launch/my_lidar.launch"></include>
 
 </launch>

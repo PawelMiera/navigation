@@ -6,7 +6,7 @@ import numpy as np
 
 class Laser:
     def __init__(self):
-        self.window_size = (500, 500)
+        self.window_size = (900, 900)
         self.window_size_half = (int(self.window_size[0] / 2), int(self.window_size[1] / 2))
         self.pixels_per_meter = 100
 
