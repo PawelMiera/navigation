@@ -21,7 +21,9 @@ class Laser:
 
         while True:
             self.preprocess_lasers()
-            self.render()
+            key = self.render()
+            if key == ord("q"):
+                break
 
     def laser_callback(self, msg):
         self.laser_data = np.array(msg.ranges).astype(np.float32)
