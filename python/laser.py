@@ -4,7 +4,7 @@ import cv2
 
 
 class Laser:
-    self.__init__(self):
+    def __init__(self):
         self.ran
         self.window_size = (1000, 1000)
         self.window_size_half = (int(self.window_size[0] / 2), int(self.window_size[1] / 2))
