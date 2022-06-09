@@ -2,17 +2,18 @@ import rospy
 from sensor_msgs.msg import LaserScan
 import cv2
 from math import pi, sin, cos
-
+import numpy as np
 
 class Laser:
     def __init__(self):
         self.window_size = (1000, 1000)
         self.window_size_half = (int(self.window_size[0] / 2), int(self.window_size[1] / 2))
         self.pixels_per_meter = 50
+
+        self.laser_resolution = 360
         self.laser_angle_per_step = 2 * pi / self.laser_resolution
         self.laser_max_range = 10
         self.laser_min_range = 0.15
-        self.laser_resolution = 360
         self.laser_ranges = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
         self.laser_data = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
         rospy.init_node('scan_values')
