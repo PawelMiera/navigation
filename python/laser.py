@@ -32,9 +32,12 @@ class Laser:
 
     def preprocess_lasers(self):
         data = self.laser_data
-        data[data == np.inf] = self.laser_max_range
 
-        data = data[::-1]
+        mask = np.isinf(data)
+        data[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), data[~mask])
+
+        data = np.maximum(data, self.laser_min_range)
+        data = np.minimum(data, self.laser_max_range)
         self.laser_ranges = data
 
     def render(self, mode='human'):
