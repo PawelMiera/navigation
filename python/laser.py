@@ -1,6 +1,7 @@
 import rospy
 from sensor_msgs.msg import LaserScan
 import cv2
+from math import pi, sin, cos
 
 
 class Laser:
