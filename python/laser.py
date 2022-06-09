@@ -27,6 +27,7 @@ class Laser:
 
     def laser_callback(self, msg):
         self.laser_data = np.array(msg.ranges).astype(np.float32)
+        print(len(self.laser_data))
 
 
     def preprocess_lasers(self):
