@@ -52,12 +52,6 @@
 
 
   <!-- Lidar -->
-  <include file="$(find rplidar_ros)/launch/rplidar.launch">
-    <arg name="serial_port"         type="string" value="/dev/ttyUSB0"/>
-    <arg name="serial_baudrate"     type="int"    value="115200"/>
-    <arg name="frame_id"            type="string" value="laser"/>
-    <arg name="inverted"            type="bool"   value="false"/>
-    <arg name="angle_compensate"    type="bool"   value="true"/>
-  </include>
+  <include file="$(find rplidar_ros)/launch/rplidar.launch"></include>
 
 </launch>
