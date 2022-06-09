@@ -10,7 +10,7 @@
     <arg name="publish_odom_tf"          value="false"/>
   </include>
   
-  <include file="$(find navigation)/launch/my_rplidar.launch"></include>
+  <include file="$(find navigation)/launch/my_lidar.launch"></include>
 
 
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find navigation)/rviz/default.rviz" required="true" />
