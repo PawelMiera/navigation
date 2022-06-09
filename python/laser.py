@@ -15,7 +15,12 @@ class Laser:
         self.laser_resolution = 360
         self.laser_ranges = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
         self.laser_data = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
-        
+        rospy.init_node('scan_values')
+        sub = rospy.Subscriber('/scan', LaserScan, self.laser_callback)
+
+        while True:
+            self.preprocess_lasers()
+            self.render()
 
     def laser_callback(self, msg):
         self.laser_data = np.array(msg.ranges).astype(np.float32)
@@ -50,6 +55,4 @@ class Laser:
         cv2.imshow("game", background)
         return cv2.waitKey(1)
 
-rospy.init_node('scan_values')
-sub = rospy.Subscriber('/scan', LaserScan, callback)
-rospy.spin()
+
