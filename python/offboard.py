@@ -39,8 +39,6 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
 
         self.vel_local = PositionTarget()
 
-        self.vel_local.type_mask = PositionTarget.IGNORE_YAW
-
         self.pos_setpoint_pub = rospy.Publisher(
             '/mavros/setpoint_position/local', PoseStamped, queue_size=1)
 
