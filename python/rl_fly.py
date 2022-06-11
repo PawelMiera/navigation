@@ -1,34 +1,26 @@
 #!/usr/bin/env python2mavros_test_common
 from __future__ import division
 
+import math
 import unittest
-import rospy
-import math
-from geometry_msgs.msg import PoseStamped, TwistStamped, AccelStamped
-from mavros_msgs.msg import Altitude, ExtendedState, HomePosition, ParamValue, State, \
-                            WaypointList
-from mavros_msgs.srv import CommandBool, ParamGet, ParamSet, SetMode, SetModeRequest, WaypointClear, \
-                            WaypointPush
-from pymavlink import mavutil
-from nav_msgs.msg._Odometry import Odometry
-from sensor_msgs.msg import NavSatFix, Imu
-from six.moves import xrange
-
-from sensor_msgs.msg import LaserScan
-
-from stable_baselines3.ppo.policies import MlpPolicy
-from stable_baselines3.common.utils import get_device
-import torch
-
-import rospy
-import math
-import numpy as np
-from geometry_msgs.msg import PoseStamped, Quaternion, TwistStamped
-from mavros_msgs.msg import ParamValue, PositionTarget
-from pymavlink import mavutil
-from six.moves import xrange
-from std_msgs.msg import Header
 from threading import Thread
+
+import numpy as np
+import torch
+from pymavlink import mavutil
+from six.moves import xrange
+from stable_baselines3.common.utils import get_device
+from stable_baselines3.ppo.policies import MlpPolicy
+
+import rospy
+from geometry_msgs.msg import PoseStamped, Quaternion
+from mavros_msgs.msg import ExtendedState, State
+from mavros_msgs.msg import ParamValue, PositionTarget
+from mavros_msgs.srv import CommandBool, ParamGet, ParamSet, SetMode, WaypointClear, \
+    WaypointPush
+from nav_msgs.msg._Odometry import Odometry
+from sensor_msgs.msg import LaserScan
+from std_msgs.msg import Header
 from tf.transformations import quaternion_from_euler
 
 
@@ -137,7 +129,7 @@ class RL_Fly(unittest.TestCase):
         self.v_yaw = 0
         self.speed = 0.5
 
-        sub = rospy.Subscriber('/laser/scan', LaserScan, self.laser_callback)
+        _ = rospy.Subscriber('/laser/scan', LaserScan, self.laser_callback)
 
         self.laser_max_range = 10
         self.laser_min_range = 0.15
@@ -164,7 +156,6 @@ class RL_Fly(unittest.TestCase):
         self.desired_heigth = 2.2
         self.desired_yaw = 0.0
 
-
     def preprocess_lasers(self):
         data = self.laser_data
 
@@ -182,7 +173,6 @@ class RL_Fly(unittest.TestCase):
 
     def laser_callback(self, msg):
         self.laser_data = np.array(msg.ranges).astype(np.float32)
-
 
     def control_drone(self):
         my_rate = 30
@@ -209,7 +199,7 @@ class RL_Fly(unittest.TestCase):
 
                 action, _states = self.model.predict(obs, deterministic=True)
 
-                #rospy.loginfo(str(action))
+                # rospy.loginfo(str(action))
 
                 e = self.desired_yaw - self.odometry.pose.pose.orientation.z
                 p = e * self.yaw_p
@@ -228,24 +218,22 @@ class RL_Fly(unittest.TestCase):
                 self.vel_local.header.stamp = rospy.Time.now()
                 self.vel_local_pub.publish(self.vel_local)
 
-
             try:  # prevent garbage in console output when thread is killed
                 rate.sleep()
             except rospy.ROSInterruptException:
                 pass
 
-
     def is_at_position(self, x, y, z, offset):
         """offset: meters"""
         rospy.logdebug(
             "current position | x:{0:.2f}, y:{1:.2f}, z:{2:.2f}".format(
-                self.local_position.pose.position.x, self.local_position.pose.
-                position.y, self.local_position.pose.position.z))
+                self.odometry.pose.pose.position.x, self.odometry.pose.pose.
+                position.y, self.odometry.pose.pose.position.z))
 
         desired = np.array((x, y, z))
-        pos = np.array((self.local_position.pose.position.x,
-                        self.local_position.pose.position.y,
-                        self.local_position.pose.position.z))
+        pos = np.array((self.odometry.pose.pose.position.x,
+                        self.odometry.pose.pose.position.y,
+                        self.odometry.pose.pose.position.z))
         return np.linalg.norm(desired - pos) < offset
 
     def reach_position(self, x, y, z, timeout):
@@ -255,10 +243,11 @@ class RL_Fly(unittest.TestCase):
         self.pos.pose.position.y = y
         self.pos.pose.position.z = z
         rospy.loginfo(
-            "attempting to reach position | x: {0}, y: {1}, z: {2} | current position x: {3:.2f}, y: {4:.2f}, z: {5:.2f}".
-            format(x, y, z, self.local_position.pose.position.x,
-                   self.local_position.pose.position.y,
-                   self.local_position.pose.position.z))
+            "attempting to reach position | x: {0}, y: {1}, z: {2} | current position x: {3:.2f}, y: {4:.2f}, "
+            "z: {5:.2f}".
+            format(x, y, z, self.odometry.pose.pose.position.x,
+                   self.odometry.pose.pose.position.y,
+                   self.odometry.pose.pose.position.z))
 
         # For demo purposes we will lock yaw/heading to north.
         yaw_degrees = 180  # North
@@ -285,13 +274,15 @@ class RL_Fly(unittest.TestCase):
                 self.fail(e)
 
         self.assertTrue(reached, (
-            "took too long to get to position | current position x: {0:.2f}, y: {1:.2f}, z: {2:.2f} | timeout(seconds): {3}".
-            format(self.local_position.pose.position.x,
-                   self.local_position.pose.position.y,
-                   self.local_position.pose.position.z, timeout)))
+            "took too long to get to position | current position x: {0:.2f}, y: {1:.2f}, z: {2:.2f} | timeout("
+            "seconds): {3}".
+            format(self.odometry.pose.pose.position.x,
+                   self.odometry.pose.pose.position.y,
+                   self.odometry.pose.pose.position.z, timeout)))
 
     def take_off(self, z, azimuth, timeout, max_error):
-        self.set_position(self.local_position.pose.position.x, self.local_position.pose.position.y, z, azimuth, timeout, max_error)
+        self.set_position(self.odometry.pose.pose.position.x, self.odometry.pose.pose.position.y, z, azimuth, timeout,
+                          max_error)
 
     def set_velocity(self, v_x, v_y, v_z, v_yaw):
 
@@ -301,7 +292,6 @@ class RL_Fly(unittest.TestCase):
 
         self.vel_local.coordinate_frame = PositionTarget.FRAME_BODY_NED
         self.vel_local.yaw_rate = v_yaw
-
 
     def set_position(self, x, y, z, azimuth, timeout, max_error):
         self.mode = Modes.POSITION_CONTROL
@@ -331,12 +321,12 @@ class RL_Fly(unittest.TestCase):
                 self.fail(e)
 
         self.assertTrue(reached, (
-            "took too long to get to position | current position x: {0:.2f}, y: {1:.2f}, z: {2:.2f} | timeout(seconds): {3}".
-            format(self.local_position.pose.position.x,
-                   self.local_position.pose.position.y,
-                   self.local_position.pose.position.z, timeout)))
+            "took too long to get to position | current position x: {0:.2f}, y: {1:.2f}, z: {2:.2f} | timeout("
+            "seconds): {3}".
+            format(self.odometry.pose.pose.position.x,
+                   self.odometry.pose.pose.position.y,
+                   self.odometry.pose.pose.position.z, timeout)))
         return reached
-
 
     def on_release(self, key):
 
@@ -360,14 +350,11 @@ class RL_Fly(unittest.TestCase):
                 self.land()
         return False
 
-
-
     def land(self):
         self.set_mode("AUTO.LAND", 5)
 
     def rtl(self):
         self.set_mode("AUTO.RTL", 5)
-
 
     def test_posctl(self):
         """Test offboard position control"""
@@ -378,7 +365,7 @@ class RL_Fly(unittest.TestCase):
                                    10, -1)
         self.log_topic_vars()
         # exempting failsafe from lost RC to allow offboard
-        rcl_except = ParamValue(1<<2, 0.0)
+        rcl_except = ParamValue(1 << 2, 0.0)
         self.set_param("COM_RCL_EXCEPT", rcl_except, 5)
         self.set_mode("OFFBOARD", 5)
 
@@ -390,10 +377,8 @@ class RL_Fly(unittest.TestCase):
             if ret:
                 break
 
-
     def tearDown(self):
         self.log_topic_vars()
-
 
     def extended_state_callback(self, data):
         if self.extended_state.vtol_state != data.vtol_state:
@@ -425,7 +410,6 @@ class RL_Fly(unittest.TestCase):
         if not self.sub_topics_ready['odometry']:
             self.sub_topics_ready['odometry'] = True
 
-
     def state_callback(self, data):
         if self.state.armed != data.armed:
             rospy.loginfo("armed state changed from {0} to {1}".format(
@@ -443,7 +427,7 @@ class RL_Fly(unittest.TestCase):
             rospy.loginfo("system_status changed from {0} to {1}".format(
                 mavutil.mavlink.enums['MAV_STATE'][
                     self.state.system_status].name, mavutil.mavlink.enums[
-                        'MAV_STATE'][data.system_status].name))
+                    'MAV_STATE'][data.system_status].name))
 
         self.state = data
 
@@ -521,7 +505,7 @@ class RL_Fly(unittest.TestCase):
         else:
             value = param_value.real
         rospy.loginfo("setting PX4 parameter: {0} with value {1}".
-        format(param_id, value))
+                      format(param_id, value))
         loop_freq = 1  # Hz
         rate = rospy.Rate(loop_freq)
         param_set = False
@@ -530,7 +514,7 @@ class RL_Fly(unittest.TestCase):
                 res = self.set_param_srv(param_id, param_value)
                 if res.success:
                     rospy.loginfo("param {0} set to {1} | seconds: {2} of {3}".
-                    format(param_id, value, i / loop_freq, timeout))
+                                  format(param_id, value, i / loop_freq, timeout))
                 break
             except rospy.ServiceException as e:
                 rospy.logerr(e)
@@ -571,7 +555,7 @@ class RL_Fly(unittest.TestCase):
     def wait_for_landed_state(self, desired_landed_state, timeout, index):
         rospy.loginfo("waiting for landed state | state: {0}, index: {1}".
                       format(mavutil.mavlink.enums['MAV_LANDED_STATE'][
-                          desired_landed_state].name, index))
+                                 desired_landed_state].name, index))
         loop_freq = 10  # Hz
         rate = rospy.Rate(loop_freq)
         landed_state_confirmed = False
@@ -590,8 +574,8 @@ class RL_Fly(unittest.TestCase):
         self.assertTrue(landed_state_confirmed, (
             "landed state not detected | desired: {0}, current: {1} | index: {2}, timeout(seconds): {3}".
             format(mavutil.mavlink.enums['MAV_LANDED_STATE'][
-                desired_landed_state].name, mavutil.mavlink.enums[
-                    'MAV_LANDED_STATE'][self.extended_state.landed_state].name,
+                       desired_landed_state].name, mavutil.mavlink.enums[
+                       'MAV_LANDED_STATE'][self.extended_state.landed_state].name,
                    index, timeout)))
 
     def wait_for_vtol_state(self, transition, timeout, index):
@@ -620,74 +604,6 @@ class RL_Fly(unittest.TestCase):
             format(mavutil.mavlink.enums['MAV_VTOL_STATE'][transition].name,
                    mavutil.mavlink.enums['MAV_VTOL_STATE'][
                        self.extended_state.vtol_state].name, index, timeout)))
-
-    def clear_wps(self, timeout):
-        """timeout(int): seconds"""
-        loop_freq = 1  # Hz
-        rate = rospy.Rate(loop_freq)
-        wps_cleared = False
-        for i in xrange(timeout * loop_freq):
-            if not self.mission_wp.waypoints:
-                wps_cleared = True
-                rospy.loginfo("clear waypoints success | seconds: {0} of {1}".
-                              format(i / loop_freq, timeout))
-                break
-            else:
-                try:
-                    res = self.wp_clear_srv()
-                    if not res.success:
-                        rospy.logerr("failed to send waypoint clear command")
-                except rospy.ServiceException as e:
-                    rospy.logerr(e)
-
-            try:
-                rate.sleep()
-            except rospy.ROSException as e:
-                self.fail(e)
-
-        self.assertTrue(wps_cleared, (
-            "failed to clear waypoints | timeout(seconds): {0}".format(timeout)
-        ))
-
-    def send_wps(self, waypoints, timeout):
-        """waypoints, timeout(int): seconds"""
-        rospy.loginfo("sending mission waypoints")
-        if self.mission_wp.waypoints:
-            rospy.loginfo("FCU already has mission waypoints")
-
-        loop_freq = 1  # Hz
-        rate = rospy.Rate(loop_freq)
-        wps_sent = False
-        wps_verified = False
-        for i in xrange(timeout * loop_freq):
-            if not wps_sent:
-                try:
-                    res = self.wp_push_srv(start_index=0, waypoints=waypoints)
-                    wps_sent = res.success
-                    if wps_sent:
-                        rospy.loginfo("waypoints successfully transferred")
-                except rospy.ServiceException as e:
-                    rospy.logerr(e)
-            else:
-                if len(waypoints) == len(self.mission_wp.waypoints):
-                    rospy.loginfo("number of waypoints transferred: {0}".
-                                  format(len(waypoints)))
-                    wps_verified = True
-
-            if wps_sent and wps_verified:
-                rospy.loginfo("send waypoints success | seconds: {0} of {1}".
-                              format(i / loop_freq, timeout))
-                break
-
-            try:
-                rate.sleep()
-            except rospy.ROSException as e:
-                self.fail(e)
-
-        self.assertTrue((
-            wps_sent and wps_verified
-        ), "mission could not be transferred and verified | timeout(seconds): {0}".
-                        format(timeout))
 
     def wait_for_mav_type(self, timeout):
         """Wait for MAV_TYPE parameter, timeout(int): seconds"""
@@ -719,27 +635,28 @@ class RL_Fly(unittest.TestCase):
 
     def log_topic_vars(self):
         """log the state of topic variables"""
-        #rospy.loginfo("========================")
-        #rospy.loginfo("===== topic values =====")
-        #rospy.loginfo("========================")
+        # rospy.loginfo("========================")
+        # rospy.loginfo("===== topic values =====")
+        # rospy.loginfo("========================")
         # rospy.loginfo("ALTITUDE: {}".format(self.altitude.local))
-        #rospy.loginfo("========================")
-        #rospy.loginfo("extended_state:\n{}".format(self.extended_state))
-        #rospy.loginfo("========================")
-        #rospy.loginfo("global_position:\n{}".format(self.global_position))
-        #rospy.loginfo("========================")
-        #rospy.loginfo("home_position:\n{}".format(self.home_position))
+        # rospy.loginfo("========================")
+        # rospy.loginfo("extended_state:\n{}".format(self.extended_state))
+        # rospy.loginfo("========================")
+        # rospy.loginfo("global_position:\n{}".format(self.global_position))
+        # rospy.loginfo("========================")
+        # rospy.loginfo("home_position:\n{}".format(self.home_position))
         # rospy.loginfo("========================")
         # rospy.loginfo("local_position:\n{}".format(self.local_position))
-        #rospy.loginfo("========================")
-        #rospy.loginfo("mission_wp:\n{}".format(self.mission_wp))
-        #rospy.loginfo("========================")
-        #rospy.loginfo("state:\n{}".format(self.state))
-        #rospy.loginfo("========================")
+        # rospy.loginfo("========================")
+        # rospy.loginfo("mission_wp:\n{}".format(self.mission_wp))
+        # rospy.loginfo("========================")
+        # rospy.loginfo("state:\n{}".format(self.state))
+        # rospy.loginfo("========================")
 
 
 if __name__ == '__main__':
     import rostest
+
     rospy.init_node('test_node', anonymous=True)
 
     rostest.rosrun("navigation", 'mavros_offboard_posctl_test',
