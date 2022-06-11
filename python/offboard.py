@@ -38,6 +38,7 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
         self.mode = Modes.POSITION_CONTROL
 
         self.vel_local = PositionTarget()
+        self.vel_local.type_mask = PositionTarget.IGNORE_YAW
 
         self.pos_setpoint_pub = rospy.Publisher(
             '/mavros/setpoint_position/local', PoseStamped, queue_size=1)
@@ -66,7 +67,7 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
         self.laser_data = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
 
         device = get_device("auto")
-        saved_variables = torch.load("ppo8_policy", map_location=device)
+        saved_variables = torch.load("m_360_1_policy.zip", map_location=device)
 
         self.model = MlpPolicy(**saved_variables["data"])
         self.model.load_state_dict(saved_variables["state_dict"], strict=False)
@@ -104,27 +105,13 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
     def laser_callback(self, msg):
         self.laser_data = np.array(msg.ranges).astype(np.float32)
 
-    def euler_from_quaternion(self, x, y, z, w):
-        """
-        Convert a quaternion into euler angles (roll, pitch, yaw)
-        roll is rotation around x in radians (counterclockwise)
-        pitch is rotation around y in radians (counterclockwise)
-        yaw is rotation around z in radians (counterclockwise)
-        """
-        t0 = +2.0 * (w * x + y * z)
-        t1 = +1.0 - 2.0 * (x * x + y * y)
-        roll_x = math.atan2(t0, t1)
-
-        t2 = +2.0 * (w * y - z * x)
-        t2 = +1.0 if t2 > +1.0 else t2
-        t2 = -1.0 if t2 < -1.0 else t2
-        pitch_y = math.asin(t2)
+    def yaw_to_euler(self, x, y, z, w):
 
         t3 = +2.0 * (w * z + x * y)
         t4 = +1.0 - 2.0 * (y * y + z * z)
         yaw_z = math.atan2(t3, t4)
 
-        return roll_x, pitch_y, yaw_z
+        return yaw_z
 
     #
     # Helper methods
@@ -142,29 +129,30 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
 
         while not rospy.is_shutdown():
 
-            roll, pitch, yaw = self.euler_from_quaternion(self.local_position.pose.orientation.x,
-                                                          self.local_position.pose.orientation.y,
-                                                          self.local_position.pose.orientation.z,
-                                                          self.local_position.pose.orientation.w)
 
-            rospy.loginfo(str(roll) + " " + str(pitch) + " " + str(yaw))
 
             if self.mode == Modes.POSITION_CONTROL:
                 self.pos.header.stamp = rospy.Time.now()
                 self.pos_setpoint_pub.publish(self.pos)
             elif self.mode == Modes.VELOCITY_CONTROL:
+                self.vel_local.yaw = 0
                 self.vel_local.header.stamp = rospy.Time.now()
                 self.vel_local_pub.publish(self.vel_local)
             elif self.mode == Modes.RL:
                 self.preprocess_lasers()
 
-                obs = self.normalize_lasers(self.laser_ranges)
+                #obs = self.normalize_lasers(self.laser_ranges)
 
-                action, _states = self.model.predict(obs, deterministic=True)
+                #action, _states = self.model.predict(obs, deterministic=True)
+
+                yaw = self.yaw_to_euler(self.local_position.pose.orientation.x,
+                                        self.local_position.pose.orientation.y,
+                                        self.local_position.pose.orientation.z,
+                                        self.local_position.pose.orientation.w)
 
                 # rospy.loginfo(str(action))
 
-                e = (self.desired_yaw - self.local_position.pose.orientation.z)
+                e = (self.desired_yaw - yaw)
                 p = e * self.yaw_p
                 self.yaw_i += self.yaw_p_i * e * (1 / 30)
 
@@ -177,7 +165,7 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
 
                 o_z = p_z + self.pos_z_i
 
-                self.set_velocity(action[0], -action[1], o_z, -o)
+                self.set_velocity(0, 0, o_z, o)
                 self.vel_local.header.stamp = rospy.Time.now()
                 self.vel_local_pub.publish(self.vel_local)
 
@@ -299,8 +287,14 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
         elif key == '3':
             self.set_arm(True, 5)
             rospy.loginfo("Start_RL")
-            self.take_off(2.5, 0, 20, 0.5)
+            self.take_off(2.5, 50, 20, 0.5)
             self.mode = Modes.RL
+        elif key == '4':
+            self.mode = Modes.VELOCITY_CONTROL
+            self.set_velocity(0,0,0,0.2)
+        elif key == '5':
+            self.mode = Modes.VELOCITY_CONTROL
+            self.set_velocity(0,0,0,-0.2)
         if self.state.armed:
             if key == 't':
                 self.take_off(2.5, 0, 20, 0.5)
@@ -308,6 +302,19 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
                 self.rtl()
             elif key == 'l':
                 self.land()
+
+            elif key == 'w':
+                self.mode = Modes.VELOCITY_CONTROL
+                self.set_velocity(0.3,0,0,0)
+            elif key == 's':
+                self.mode = Modes.VELOCITY_CONTROL
+                self.set_velocity(-0.3,0,0,0)
+            elif key == 'a':
+                self.mode = Modes.VELOCITY_CONTROL
+                self.set_velocity(0,0.3,0,0)
+            elif key == 'd':
+                self.mode = Modes.VELOCITY_CONTROL
+                self.set_velocity(0,-0.3,0,0)
         return False
 
     def land(self):

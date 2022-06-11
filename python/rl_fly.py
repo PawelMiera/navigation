@@ -113,6 +113,8 @@ class RL_Fly(unittest.TestCase):
 
         self.vel_local = PositionTarget()
 
+        self.vel_local.type_mask = PositionTarget.IGNORE_YAW
+
         self.pos_setpoint_pub = rospy.Publisher(
             '/mavros/setpoint_position/local', PoseStamped, queue_size=1)
 
@@ -174,6 +176,14 @@ class RL_Fly(unittest.TestCase):
     def laser_callback(self, msg):
         self.laser_data = np.array(msg.ranges).astype(np.float32)
 
+    def yaw_to_euler(self, x, y, z, w):
+
+        t3 = +2.0 * (w * z + x * y)
+        t4 = +1.0 - 2.0 * (y * y + z * z)
+        yaw_z = math.atan2(t3, t4)
+
+        return yaw_z
+
     def control_drone(self):
         my_rate = 30
         rate = rospy.Rate(my_rate)  # Hz
@@ -201,7 +211,12 @@ class RL_Fly(unittest.TestCase):
 
                 # rospy.loginfo(str(action))
 
-                e = self.desired_yaw - self.odometry.pose.pose.orientation.z
+                yaw = self.yaw_to_euler(self.odometry.pose.pose.orientation.x,
+                                        self.odometry.pose.pose.orientation.y,
+                                        self.odometry.pose.pose.orientation.z,
+                                        self.odometry.pose.pose.orientation.w)
+
+                e = self.desired_yaw - yaw
                 p = e * self.yaw_p
                 self.yaw_i += self.yaw_p_i * e * (1 / my_rate)
 
@@ -214,7 +229,7 @@ class RL_Fly(unittest.TestCase):
 
                 o_z = p_z + self.pos_z_i
 
-                self.set_velocity(action[0], -action[1], o_z, -o)
+                self.set_velocity(action[0], -action[1], o_z, o)
                 self.vel_local.header.stamp = rospy.Time.now()
                 self.vel_local_pub.publish(self.vel_local)
 
@@ -348,6 +363,19 @@ class RL_Fly(unittest.TestCase):
                 self.rtl()
             elif key == 'l':
                 self.land()
+            elif key == 'w':
+                self.mode = Modes.VELOCITY_CONTROL
+                self.set_velocity(0.3, 0, 0, 0)
+            elif key == 's':
+                self.mode = Modes.VELOCITY_CONTROL
+                self.set_velocity(-0.3, 0, 0, 0)
+            elif key == 'a':
+                self.mode = Modes.VELOCITY_CONTROL
+                self.set_velocity(0, 0.3, 0, 0)
+            elif key == 'd':
+                self.mode = Modes.VELOCITY_CONTROL
+                self.set_velocity(0, -0.3, 0, 0)
+
         return False
 
     def land(self):
