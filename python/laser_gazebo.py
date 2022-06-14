@@ -6,18 +6,18 @@ import numpy as np
 
 class Laser:
     def __init__(self):
-        self.window_size = (900, 900)
+        self.window_size = (1000, 1000)
         self.window_size_half = (int(self.window_size[0] / 2), int(self.window_size[1] / 2))
-        self.pixels_per_meter = 100
+        self.pixels_per_meter = 50
 
         self.laser_resolution = 360
         self.laser_angle_per_step = 2 * pi / self.laser_resolution
-        self.laser_max_range = 4
+        self.laser_max_range = 10
         self.laser_min_range = 0.15
         self.laser_ranges = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
         self.laser_data = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
         rospy.init_node('scan_values')
-        sub = rospy.Subscriber('/scan', LaserScan, self.laser_callback)
+        sub = rospy.Subscriber('/laser/scan', LaserScan, self.laser_callback)
 
         while True:
             self.preprocess_lasers()
@@ -32,9 +32,11 @@ class Laser:
 
     def preprocess_lasers(self):
         data = self.laser_data
+        data = data[::-1]
 
         mask = np.isinf(data)
-        data[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), data[~mask])
+        #data[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), data[~mask])
+        data[mask] = self.laser_max_range
 
         data = np.maximum(data, self.laser_min_range)
         data = np.minimum(data, self.laser_max_range)

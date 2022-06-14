@@ -89,9 +89,11 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
 
     def preprocess_lasers(self):
         data = self.laser_data
+        data = data[::-1]
 
         mask = np.isinf(data)
-        data[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), data[~mask])
+        #data[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), data[~mask])
+        data[mask] = self.laser_max_range
 
         data = np.maximum(data, self.laser_min_range)
         data = np.minimum(data, self.laser_max_range)
@@ -285,7 +287,7 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
         elif key == '3':
             self.set_arm(True, 5)
             rospy.loginfo("Start_RL")
-            self.take_off(2.5, 50, 20, 0.5)
+            self.take_off(2.5, 0, 20, 0.5)
             self.mode = Modes.RL
         elif key == '4':
             self.mode = Modes.VELOCITY_CONTROL

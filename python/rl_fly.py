@@ -131,7 +131,7 @@ class RL_Fly(unittest.TestCase):
         self.v_yaw = 0
         self.speed = 0.5
 
-        _ = rospy.Subscriber('/laser/scan', LaserScan, self.laser_callback)
+        _ = rospy.Subscriber('/scan', LaserScan, self.laser_callback)
 
         self.laser_max_range = 10
         self.laser_min_range = 0.15
@@ -354,11 +354,11 @@ class RL_Fly(unittest.TestCase):
         elif key == '3':
             self.set_arm(True, 5)
             rospy.loginfo("Start_RL")
-            self.take_off(2.5, 0, 20, 0.5)
+            self.take_off(self.desired_heigth, 0, 20, 0.5)
             self.mode = Modes.RL
         if self.state.armed:
             if key == 't':
-                self.take_off(2.5, 0, 20, 0.5)
+                self.take_off(self.desired_heigth, 0, 20, 0.5)
             elif key == 'p':
                 self.rtl()
             elif key == 'l':
