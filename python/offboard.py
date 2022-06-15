@@ -88,13 +88,24 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
         super(MavrosOffboardPosctlTest, self).tearDown()
 
     def preprocess_lasers(self):
-        data = self.laser_data
+        data = self.laser_data.copy()
 
-        mask = np.isinf(data)
-        data[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), data[~mask])
+        mask = np.isinf(self.laser_ranges)
+
+        out_list = [np.array([data[self.laser_resolution-1], data[1]])]
+        for i in range(1, self.laser_resolution - 1):
+            curr = np.concatenate([data[i - 1:i], data[i+1:i + 2]])
+            out_list.append(curr)
+
+        out_list.append([data[self.laser_resolution-2], data[0]])
+
+        neighbours_closest_min = np.min(out_list, axis=1)
+
+        data[mask] = neighbours_closest_min[mask]
 
         data = np.maximum(data, self.laser_min_range)
         data = np.minimum(data, self.laser_max_range)
+
         self.laser_ranges = data
 
     def normalize_lasers(self, laser_ranges):
