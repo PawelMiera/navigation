@@ -33,9 +33,11 @@ class Laser:
     def preprocess_lasers(self):
         data = self.laser_data.copy()
 
-        mask = np.isinf(self.laser_ranges)
+        mask = np.isinf(data)
 
         print("max: ", np.max(data[np.logical_not(mask)]))
+
+        print(data[np.logical_not(mask)])
 
         out_list = [np.array([data[self.laser_resolution-1], data[1]])]
         for i in range(1, self.laser_resolution - 1):
