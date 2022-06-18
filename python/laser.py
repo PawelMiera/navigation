@@ -37,7 +37,7 @@ class Laser:
 
         print("max: ", np.max(data[np.logical_not(mask)]))
 
-        print(data[np.logical_not(mask)])
+        #print(data[np.logical_not(mask)])
 
         out_list = [np.array([data[self.laser_resolution-1], data[1]])]
         for i in range(1, self.laser_resolution - 1):
