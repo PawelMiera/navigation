@@ -22,7 +22,7 @@ from nav_msgs.msg._Odometry import Odometry
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Header
 from tf.transformations import quaternion_from_euler
-
+from fast_process import preprocess_fast
 
 class Modes:
     POSITION_CONTROL = 0
@@ -255,7 +255,11 @@ class RL_Fly(unittest.TestCase):
                 self.vel_local_pub.publish(self.vel_local)
 
             elif self.mode == Modes.RL:
-                self.preprocess_lasers()
+                self.laser_ranges = preprocess_fast(self.laser_data, self.laser_resolution, self.laser_max_range,
+                                                    self.laser_min_range)
+
+                self.laser_ranges = np.maximum(self.laser_ranges, self.laser_min_range)
+                self.laser_ranges = np.minimum(self.laser_ranges, self.laser_max_range)
 
                 obs = self.normalize_lasers(self.laser_ranges)
 
