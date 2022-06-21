@@ -18,7 +18,7 @@ class Laser:
         self.laser_ranges = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
         self.laser_data = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
         rospy.init_node('scan_values')
-        sub = rospy.Subscriber('/scan_filtered', LaserScan, self.laser_callback)
+        sub = rospy.Subscriber('/scan', LaserScan, self.laser_callback)
 
         while True:
             self.laser_ranges = preprocess_slow(self.laser_data, self.laser_resolution, self.laser_max_range,
