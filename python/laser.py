@@ -17,7 +17,7 @@ class Laser:
         self.laser_ranges = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
         self.laser_data = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
         rospy.init_node('scan_values')
-        sub = rospy.Subscriber('/scan', LaserScan, self.laser_callback)
+        sub = rospy.Subscriber('/scan_filtered', LaserScan, self.laser_callback)
 
         while True:
             self.preprocess_lasers()
@@ -62,25 +62,27 @@ class Laser:
     def preprocess_lasers(self):
         data = self.laser_data.copy()
 
-        mask = np.isinf(data)
+        mask = np.isnan(data)
 
-        print("max: ", np.max(data[np.logical_not(mask)]))
+        data[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), data[~mask])
 
-        #print(data[np.logical_not(mask)])
+        # print("max: ", np.max(data[np.logical_not(mask)]))
+        #
+        # #print(data[np.logical_not(mask)])
+        #
+        # out_list = [np.array([data[self.laser_resolution-1], data[1]])]
+        # for i in range(1, self.laser_resolution - 1):
+        #     curr = np.concatenate([data[i - 1:i], data[i+1:i + 2]])
+        #     out_list.append(curr)
+        #
+        # out_list.append([data[self.laser_resolution-2], data[0]])
+        #
+        # neighbours_closest_min = np.min(out_list, axis=1)
+        #
+        # data[mask] = neighbours_closest_min[mask]
 
-        out_list = [np.array([data[self.laser_resolution-1], data[1]])]
-        for i in range(1, self.laser_resolution - 1):
-            curr = np.concatenate([data[i - 1:i], data[i+1:i + 2]])
-            out_list.append(curr)
-
-        out_list.append([data[self.laser_resolution-2], data[0]])
-
-        neighbours_closest_min = np.min(out_list, axis=1)
-
-        data[mask] = neighbours_closest_min[mask]
-
-        data = np.maximum(data, self.laser_min_range)
-        data = np.minimum(data, self.laser_max_range)
+        # data = np.maximum(data, self.laser_min_range)
+        # data = np.minimum(data, self.laser_max_range)
 
         self.laser_ranges = data
 

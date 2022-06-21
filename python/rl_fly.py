@@ -114,6 +114,8 @@ class RL_Fly(unittest.TestCase):
 
         self.vel_local = PositionTarget()
 
+        self.set_velocity(0,0,0,0)
+
         self.vel_local.type_mask = PositionTarget.IGNORE_YAW
 
         self.pos_setpoint_pub = rospy.Publisher(
@@ -156,7 +158,7 @@ class RL_Fly(unittest.TestCase):
         self.pos_z_p = 0.7
         self.pos_z_p_i = 0.002
 
-        self.desired_heigth = 1.7
+        self.desired_heigth = 1.5
         self.desired_yaw = 0.0
 
     def preprocess_lasers(self):
@@ -210,6 +212,17 @@ class RL_Fly(unittest.TestCase):
         i = 0
 
         while not rospy.is_shutdown():
+
+            yaw = self.yaw_to_euler(self.odometry.pose.pose.orientation.x,
+                                    self.odometry.pose.pose.orientation.y,
+                                    self.odometry.pose.pose.orientation.z,
+                                    self.odometry.pose.pose.orientation.w)
+
+            if i % 30 == 0:
+                rospy.loginfo("x: " + str(self.odometry.pose.pose.position.x),
+                              " y: " + str(self.odometry.pose.pose.position.y), " z: "
+                              + str(self.odometry.pose.pose.position.z), " yaw: " + str(yaw))
+
             if self.mode == Modes.POSITION_CONTROL:
                 self.pos.header.stamp = rospy.Time.now()
                 self.pos_setpoint_pub.publish(self.pos)
@@ -218,11 +231,6 @@ class RL_Fly(unittest.TestCase):
                 self.vel_local_pub.publish(self.vel_local)
             elif self.mode == Modes.TEST:
                 i += 1
-
-                yaw = self.yaw_to_euler(self.odometry.pose.pose.orientation.x,
-                                        self.odometry.pose.pose.orientation.y,
-                                        self.odometry.pose.pose.orientation.z,
-                                        self.odometry.pose.pose.orientation.w)
 
                 e = self.desired_yaw - yaw
                 p = e * self.yaw_p
@@ -237,12 +245,10 @@ class RL_Fly(unittest.TestCase):
 
                 o_z = p_z + self.pos_z_i
 
-                self.vel_local.velocity.z = o_z
-                self.vel_local.yaw_rate = o
-                self.vel_local.coordinate_frame = PositionTarget.FRAME_BODY_NED
+                # self.vel_local.velocity.z = o_z
+                # self.vel_local.yaw_rate = o
+                # self.vel_local.coordinate_frame = PositionTarget.FRAME_BODY_NED
 
-                if i % 60 == 0:
-                    rospy.loginfo("H: " + str(self.odometry.pose.pose.position.z), " y: " + str(yaw))
 
 
                 self.vel_local.header.stamp = rospy.Time.now()
@@ -257,10 +263,6 @@ class RL_Fly(unittest.TestCase):
 
                 # rospy.loginfo(str(action))
 
-                yaw = self.yaw_to_euler(self.odometry.pose.pose.orientation.x,
-                                        self.odometry.pose.pose.orientation.y,
-                                        self.odometry.pose.pose.orientation.z,
-                                        self.odometry.pose.pose.orientation.w)
 
                 e = self.desired_yaw - yaw
                 p = e * self.yaw_p
@@ -405,6 +407,9 @@ class RL_Fly(unittest.TestCase):
         if self.state.armed:
             if key == 't':
                 self.take_off(self.desired_heigth, 0, 20, 0.5)
+            elif key == 'y':
+                self.take_off(self.desired_heigth, 0, 20, 0.5)
+                self.mode = Modes.TEST
             elif key == 'p':
                 self.rtl()
             elif key == 'l':
