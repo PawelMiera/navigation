@@ -3,6 +3,7 @@ from sensor_msgs.msg import LaserScan
 import cv2
 from math import pi, sin, cos
 import numpy as np
+from fast_process import preprocess_fast
 
 class Laser:
     def __init__(self):
@@ -20,7 +21,8 @@ class Laser:
         sub = rospy.Subscriber('/scan_filtered', LaserScan, self.laser_callback)
 
         while True:
-            self.preprocess_lasers()
+            self.laser_ranges = preprocess_fast(self.laser_ranges, self.laser_resolution, self.laser_max_range,
+                                                self.laser_min_range)
             key = self.render()
             if key == ord("q"):
                 break
