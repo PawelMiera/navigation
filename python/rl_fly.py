@@ -28,6 +28,7 @@ class Modes:
     POSITION_CONTROL = 0
     VELOCITY_CONTROL = 1
     RL = 2
+    TEST = 3
 
 
 class RL_Fly(unittest.TestCase):
@@ -155,7 +156,7 @@ class RL_Fly(unittest.TestCase):
         self.pos_z_p = 0.7
         self.pos_z_p_i = 0.002
 
-        self.desired_heigth = 2.2
+        self.desired_heigth = 1.7
         self.desired_yaw = 0.0
 
     def preprocess_lasers(self):
@@ -206,6 +207,8 @@ class RL_Fly(unittest.TestCase):
 
         rospy.loginfo(str(self.odometry))
 
+        i = 0
+
         while not rospy.is_shutdown():
             if self.mode == Modes.POSITION_CONTROL:
                 self.pos.header.stamp = rospy.Time.now()
@@ -213,6 +216,38 @@ class RL_Fly(unittest.TestCase):
             elif self.mode == Modes.VELOCITY_CONTROL:
                 self.vel_local.header.stamp = rospy.Time.now()
                 self.vel_local_pub.publish(self.vel_local)
+            elif self.mode == Modes.TEST:
+                i += 1
+
+                yaw = self.yaw_to_euler(self.odometry.pose.pose.orientation.x,
+                                        self.odometry.pose.pose.orientation.y,
+                                        self.odometry.pose.pose.orientation.z,
+                                        self.odometry.pose.pose.orientation.w)
+
+                e = self.desired_yaw - yaw
+                p = e * self.yaw_p
+                self.yaw_i += self.yaw_p_i * e * (1 / my_rate)
+
+                o = p + self.yaw_i
+
+                e_z = self.desired_heigth - self.odometry.pose.pose.position.z
+
+                p_z = e_z * self.pos_z_p
+                self.pos_z_i += self.pos_z_p_i * e_z * (1 / my_rate)
+
+                o_z = p_z + self.pos_z_i
+
+                self.vel_local.velocity.z = o_z
+                self.vel_local.yaw_rate = o
+                self.vel_local.coordinate_frame = PositionTarget.FRAME_BODY_NED
+
+                if i % 60 == 0:
+                    rospy.loginfo("H: " + str(self.odometry.pose.pose.position.z), " y: " + str(yaw))
+
+
+                self.vel_local.header.stamp = rospy.Time.now()
+                self.vel_local_pub.publish(self.vel_local)
+
             elif self.mode == Modes.RL:
                 self.preprocess_lasers()
 
@@ -375,16 +410,16 @@ class RL_Fly(unittest.TestCase):
             elif key == 'l':
                 self.land()
             elif key == 'w':
-                self.mode = Modes.VELOCITY_CONTROL
+                self.mode = Modes.TEST
                 self.set_velocity(0.3, 0, 0, 0)
             elif key == 's':
-                self.mode = Modes.VELOCITY_CONTROL
+                self.mode = Modes.TEST
                 self.set_velocity(-0.3, 0, 0, 0)
             elif key == 'a':
-                self.mode = Modes.VELOCITY_CONTROL
+                self.mode = Modes.TEST
                 self.set_velocity(0, 0.3, 0, 0)
             elif key == 'd':
-                self.mode = Modes.VELOCITY_CONTROL
+                self.mode = Modes.TEST
                 self.set_velocity(0, -0.3, 0, 0)
 
         return False
