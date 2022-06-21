@@ -611,6 +611,7 @@ class RL_Fly(unittest.TestCase):
         rate = rospy.Rate(loop_freq)
         simulation_ready = False
         for i in xrange(timeout * loop_freq):
+            rospy.loginfo(str(self.sub_topics_ready))
             if all(value for value in self.sub_topics_ready.values()):
                 simulation_ready = True
                 rospy.loginfo("simulation topics ready | seconds: {0} of {1}".
