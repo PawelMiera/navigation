@@ -217,9 +217,9 @@ class RL_Fly(unittest.TestCase):
                                         self.odometry.pose.pose.orientation.w)
 
                 if i % 30 == 0:
-                    rospy.loginfo("x: " + str(self.odometry.pose.pose.position.x),
-                                  " y: " + str(self.odometry.pose.pose.position.y), " z: "
-                                  + str(self.odometry.pose.pose.position.z), " yaw: " + str(yaw))
+                    rospy.loginfo("x: " + str(self.odometry.pose.pose.position.x) +
+                                  " y: " + str(self.odometry.pose.pose.position.y) + " z: "
+                                  + str(self.odometry.pose.pose.position.z) + " yaw: " + str(yaw))
 
                 if self.mode == Modes.POSITION_CONTROL:
                     self.pos.header.stamp = rospy.Time.now()
