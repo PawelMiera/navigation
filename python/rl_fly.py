@@ -215,7 +215,7 @@ class RL_Fly(unittest.TestCase):
                                         self.odometry.pose.pose.orientation.y,
                                         self.odometry.pose.pose.orientation.z,
                                         self.odometry.pose.pose.orientation.w)
-
+                i += 1
                 if i % 30 == 0:
                     rospy.loginfo("x: " + str(self.odometry.pose.pose.position.x) +
                                   " y: " + str(self.odometry.pose.pose.position.y) + " z: "
@@ -228,7 +228,7 @@ class RL_Fly(unittest.TestCase):
                     self.vel_local.header.stamp = rospy.Time.now()
                     self.vel_local_pub.publish(self.vel_local)
                 elif self.mode == Modes.TEST:
-                    i += 1
+
 
                     e = self.desired_yaw - yaw
                     p = e * self.yaw_p
