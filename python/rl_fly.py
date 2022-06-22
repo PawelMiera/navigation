@@ -207,83 +207,83 @@ class RL_Fly(unittest.TestCase):
         self.vel_local.header = Header()
         self.vel_local.header.frame_id = "base_footprint"
 
-        rospy.loginfo(str(self.odometry))
-
         i = 0
 
         while not rospy.is_shutdown():
+            try:
+                yaw = self.yaw_to_euler(self.odometry.pose.pose.orientation.x,
+                                        self.odometry.pose.pose.orientation.y,
+                                        self.odometry.pose.pose.orientation.z,
+                                        self.odometry.pose.pose.orientation.w)
 
-            yaw = self.yaw_to_euler(self.odometry.pose.pose.orientation.x,
-                                    self.odometry.pose.pose.orientation.y,
-                                    self.odometry.pose.pose.orientation.z,
-                                    self.odometry.pose.pose.orientation.w)
+                if i % 30 == 0:
+                    rospy.loginfo("x: " + str(self.odometry.pose.pose.position.x),
+                                  " y: " + str(self.odometry.pose.pose.position.y), " z: "
+                                  + str(self.odometry.pose.pose.position.z), " yaw: " + str(yaw))
 
-            if i % 30 == 0:
-                rospy.loginfo("x: " + str(self.odometry.pose.pose.position.x),
-                              " y: " + str(self.odometry.pose.pose.position.y), " z: "
-                              + str(self.odometry.pose.pose.position.z), " yaw: " + str(yaw))
+                if self.mode == Modes.POSITION_CONTROL:
+                    self.pos.header.stamp = rospy.Time.now()
+                    self.pos_setpoint_pub.publish(self.pos)
+                elif self.mode == Modes.VELOCITY_CONTROL:
+                    self.vel_local.header.stamp = rospy.Time.now()
+                    self.vel_local_pub.publish(self.vel_local)
+                elif self.mode == Modes.TEST:
+                    i += 1
 
-            if self.mode == Modes.POSITION_CONTROL:
-                self.pos.header.stamp = rospy.Time.now()
-                self.pos_setpoint_pub.publish(self.pos)
-            elif self.mode == Modes.VELOCITY_CONTROL:
-                self.vel_local.header.stamp = rospy.Time.now()
-                self.vel_local_pub.publish(self.vel_local)
-            elif self.mode == Modes.TEST:
-                i += 1
+                    e = self.desired_yaw - yaw
+                    p = e * self.yaw_p
+                    self.yaw_i += self.yaw_p_i * e * (1 / my_rate)
 
-                e = self.desired_yaw - yaw
-                p = e * self.yaw_p
-                self.yaw_i += self.yaw_p_i * e * (1 / my_rate)
+                    o = p + self.yaw_i
 
-                o = p + self.yaw_i
+                    e_z = self.desired_heigth - self.odometry.pose.pose.position.z
 
-                e_z = self.desired_heigth - self.odometry.pose.pose.position.z
+                    p_z = e_z * self.pos_z_p
+                    self.pos_z_i += self.pos_z_p_i * e_z * (1 / my_rate)
 
-                p_z = e_z * self.pos_z_p
-                self.pos_z_i += self.pos_z_p_i * e_z * (1 / my_rate)
+                    o_z = p_z + self.pos_z_i
 
-                o_z = p_z + self.pos_z_i
-
-                # self.vel_local.velocity.z = o_z
-                # self.vel_local.yaw_rate = o
-                # self.vel_local.coordinate_frame = PositionTarget.FRAME_BODY_NED
-
-
-
-                self.vel_local.header.stamp = rospy.Time.now()
-                self.vel_local_pub.publish(self.vel_local)
-
-            elif self.mode == Modes.RL:
-                self.laser_ranges = preprocess_fast(self.laser_data, self.laser_resolution, self.laser_max_range,
-                                                    self.laser_min_range)
-
-                self.laser_ranges = np.maximum(self.laser_ranges, self.laser_min_range)
-                self.laser_ranges = np.minimum(self.laser_ranges, self.laser_max_range)
-
-                obs = self.normalize_lasers(self.laser_ranges)
-
-                action, _states = self.model.predict(obs, deterministic=True)
-
-                # rospy.loginfo(str(action))
+                    # self.vel_local.velocity.z = o_z
+                    # self.vel_local.yaw_rate = o
+                    # self.vel_local.coordinate_frame = PositionTarget.FRAME_BODY_NED
 
 
-                e = self.desired_yaw - yaw
-                p = e * self.yaw_p
-                self.yaw_i += self.yaw_p_i * e * (1 / my_rate)
 
-                o = p + self.yaw_i
+                    self.vel_local.header.stamp = rospy.Time.now()
+                    self.vel_local_pub.publish(self.vel_local)
 
-                e_z = self.desired_heigth - self.odometry.pose.pose.position.z
+                elif self.mode == Modes.RL:
+                    self.laser_ranges = preprocess_fast(self.laser_data, self.laser_resolution, self.laser_max_range,
+                                                        self.laser_min_range)
 
-                p_z = e_z * self.pos_z_p
-                self.pos_z_i += self.pos_z_p_i * e_z * (1 / my_rate)
+                    self.laser_ranges = np.maximum(self.laser_ranges, self.laser_min_range)
+                    self.laser_ranges = np.minimum(self.laser_ranges, self.laser_max_range)
 
-                o_z = p_z + self.pos_z_i
+                    obs = self.normalize_lasers(self.laser_ranges)
 
-                self.set_velocity(action[0], -action[1], o_z, o)
-                self.vel_local.header.stamp = rospy.Time.now()
-                self.vel_local_pub.publish(self.vel_local)
+                    action, _states = self.model.predict(obs, deterministic=True)
+
+                    # rospy.loginfo(str(action))
+
+
+                    e = self.desired_yaw - yaw
+                    p = e * self.yaw_p
+                    self.yaw_i += self.yaw_p_i * e * (1 / my_rate)
+
+                    o = p + self.yaw_i
+
+                    e_z = self.desired_heigth - self.odometry.pose.pose.position.z
+
+                    p_z = e_z * self.pos_z_p
+                    self.pos_z_i += self.pos_z_p_i * e_z * (1 / my_rate)
+
+                    o_z = p_z + self.pos_z_i
+
+                    self.set_velocity(action[0], -action[1], o_z, o)
+                    self.vel_local.header.stamp = rospy.Time.now()
+                    self.vel_local_pub.publish(self.vel_local)
+            except Exception as e:
+                rospy.loginfo("LOOP error: " + str(e))
 
             try:  # prevent garbage in console output when thread is killed
                 rate.sleep()
