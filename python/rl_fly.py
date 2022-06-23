@@ -430,6 +430,12 @@ class RL_Fly(unittest.TestCase):
             elif key == 'd':
                 self.mode = Modes.TEST
                 self.set_velocity(0, -0.3, 0, 0)
+            elif key == 'z':
+                self.mode = Modes.TEST
+                self.set_velocity(0, 0, -0.5, 0)
+            elif key == 'x':
+                self.mode = Modes.TEST
+                self.set_velocity(0, 0.5, 0, 0)
 
         return False
 
