@@ -422,9 +422,6 @@ class RL_Fly(unittest.TestCase):
         if self.state.armed:
             if key == 't':
                 self.take_off(self.desired_heigth, 0, 20, 0.5)
-            elif key == 'y':
-                self.take_off(self.desired_heigth, 0, 20, 0.5)
-                self.mode = Modes.TEST
             elif key == 'p':
                 self.rtl()
             elif key == 'l':
@@ -451,7 +448,16 @@ class RL_Fly(unittest.TestCase):
                 self.mode = Modes.TEST
                 self.set_velocity(0, 0, 0, 0)
             elif key == 'e':
+                self.mode = Modes.TEST
+                self.set_velocity(0, 0, 0, 0.5)
+            elif key == 'f':
+                self.mode = Modes.TEST
+                self.set_velocity(0, 0, 0, 0)
+            elif key == 'y':
+                self.mode = Modes.TEST
                 self.test_yaw = True
+
+
 
         return False
 
