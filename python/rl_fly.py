@@ -161,6 +161,10 @@ class RL_Fly(unittest.TestCase):
         self.desired_heigth = 1.5
         self.desired_yaw = 0.0
 
+        self.last_pos_x = 0
+        self.pos_no_change_count = 0
+        self.test_yaw = False
+
     def preprocess_lasers(self):
         data = self.laser_data.copy()
 
@@ -211,6 +215,18 @@ class RL_Fly(unittest.TestCase):
 
         while not rospy.is_shutdown():
             try:
+
+                if self.odometry.pose.pose.orientation.x == self.last_pos_x:
+                    self.pos_no_change_count += 1
+                else:
+                    self.pos_no_change_count = 0
+
+                if self.pos_no_change_count > 30:
+                    self.land()
+                    rospy.loginfo("Position estimate error, landing!")
+
+                self.last_pos_x = self.odometry.pose.pose.orientation.x
+
                 yaw = self.yaw_to_euler(self.odometry.pose.pose.orientation.x,
                                         self.odometry.pose.pose.orientation.y,
                                         self.odometry.pose.pose.orientation.z,
@@ -229,7 +245,6 @@ class RL_Fly(unittest.TestCase):
                     self.vel_local_pub.publish(self.vel_local)
                 elif self.mode == Modes.TEST:
 
-
                     e = self.desired_yaw - yaw
                     p = e * self.yaw_p
                     self.yaw_i += self.yaw_p_i * e * (1 / my_rate)
@@ -244,10 +259,9 @@ class RL_Fly(unittest.TestCase):
                     o_z = p_z + self.pos_z_i
 
                     # self.vel_local.velocity.z = o_z
-                    # self.vel_local.yaw_rate = o
+                    if self.test_yaw:
+                        self.vel_local.yaw_rate = o
                     # self.vel_local.coordinate_frame = PositionTarget.FRAME_BODY_NED
-
-
 
                     self.vel_local.header.stamp = rospy.Time.now()
                     self.vel_local_pub.publish(self.vel_local)
@@ -255,9 +269,6 @@ class RL_Fly(unittest.TestCase):
                 elif self.mode == Modes.RL:
                     self.laser_ranges = preprocess_fast(self.laser_data, self.laser_resolution, self.laser_max_range,
                                                         self.laser_min_range)
-
-                    self.laser_ranges = np.maximum(self.laser_ranges, self.laser_min_range)
-                    self.laser_ranges = np.minimum(self.laser_ranges, self.laser_max_range)
 
                     obs = self.normalize_lasers(self.laser_ranges)
 
@@ -436,6 +447,11 @@ class RL_Fly(unittest.TestCase):
             elif key == 'x':
                 self.mode = Modes.TEST
                 self.set_velocity(0, 0.5, 0, 0)
+            elif key == 'c':
+                self.mode = Modes.TEST
+                self.set_velocity(0, 0, 0, 0)
+            elif key == 'e':
+                self.test_yaw = True
 
         return False
 

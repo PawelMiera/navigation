@@ -26,8 +26,6 @@ class Laser:
             start = time.time()
             self.laser_ranges = preprocess_fast(self.laser_data, self.laser_resolution, self.laser_max_range,
                                                 self.laser_min_range)
-            self.laser_ranges = np.maximum(self.laser_ranges, self.laser_min_range)
-            self.laser_ranges = np.minimum(self.laser_ranges, self.laser_max_range)
             print(time.time() - start)
             #key = self.render()
             #if key == ord("q"):
