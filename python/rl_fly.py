@@ -443,7 +443,7 @@ class RL_Fly(unittest.TestCase):
                 self.set_velocity(0, 0, -0.5, 0)
             elif key == 'x':
                 self.mode = Modes.TEST
-                self.set_velocity(0, 0.5, 0, 0)
+                self.set_velocity(0, 0, 0.5, 0)
             elif key == 'c':
                 self.mode = Modes.TEST
                 self.set_velocity(0, 0, 0, 0)
