@@ -124,10 +124,6 @@ class RL_Fly(unittest.TestCase):
         self.vel_local_pub = rospy.Publisher(
             '/mavros/setpoint_raw/local', PositionTarget, queue_size=1)
 
-        self.drone_control_thread = Thread(target=self.control_drone, args=())
-        self.drone_control_thread.daemon = True
-        self.drone_control_thread.start()
-
         self.v_x = 0
         self.v_y = 0
         self.v_z = 0
@@ -164,6 +160,10 @@ class RL_Fly(unittest.TestCase):
         self.last_pos_x = 0
         self.pos_no_change_count = 0
         self.test_yaw = False
+
+        self.drone_control_thread = Thread(target=self.control_drone, args=())
+        self.drone_control_thread.daemon = True
+        self.drone_control_thread.start()
 
     def preprocess_lasers(self):
         data = self.laser_data.copy()
