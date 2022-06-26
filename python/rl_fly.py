@@ -235,7 +235,9 @@ class RL_Fly(unittest.TestCase):
                 if i % 30 == 0:
                     rospy.loginfo("x: " + str(round(self.odometry.pose.pose.position.x,2)) +
                                   " y: " + str(round(self.odometry.pose.pose.position.y,2)) + " z: "
-                                  + str(round(self.odometry.pose.pose.position.z,2)) + " yaw: " + str(round(yaw,2)))
+                                  + str(round(self.odometry.pose.pose.position.z,2)) + " yaw: " + str(round(yaw,2)) +
+                                  " rx: " + str(self.vel_local.velocity.x) + " ry: " + str(self.vel_local.velocity.y) +
+                                  " rz: " + str(self.vel_local.velocity.z) + " y_rate: " + str(self.vel_local.yaw_rate))
 
                 if self.mode == Modes.POSITION_CONTROL:
                     self.pos.header.stamp = rospy.Time.now()
@@ -444,9 +446,6 @@ class RL_Fly(unittest.TestCase):
             elif key == 'x':
                 self.mode = Modes.TEST
                 self.set_velocity(0, 0, 0.5, 0)
-            elif key == 'c':
-                self.mode = Modes.TEST
-                self.set_velocity(0, 0, 0, 0)
             elif key == 'e':
                 self.mode = Modes.TEST
                 self.set_velocity(0, 0, 0, 0.5)
