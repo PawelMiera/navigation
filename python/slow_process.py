@@ -1,3 +1,5 @@
+import numpy as np
+
 def preprocess_slow(laser_ranges, laser_resolution, laser_max_range, laser_min_range):
     data2 = laser_ranges.copy()
 
@@ -18,7 +20,7 @@ def preprocess_slow(laser_ranges, laser_resolution, laser_max_range, laser_min_r
             if curr_sum != 0:
                 data2[i] = curr_sum / count
 
-            if data2[i] > laser_max_range:
+            if np.greater(data2[i], laser_max_range):
                 data2[i] = laser_max_range
             elif data2[i] < laser_min_range:
                 data2[i] = laser_min_range
@@ -38,3 +40,4 @@ def preprocess_slow(laser_ranges, laser_resolution, laser_max_range, laser_min_r
             data2[i] = mean_filter_sum / mean_filter_count
 
     return data2
+
