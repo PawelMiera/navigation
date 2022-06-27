@@ -1,5 +1,3 @@
-import numpy as np
-
 def preprocess_slow(laser_ranges, laser_resolution, laser_max_range, laser_min_range):
     data2 = laser_ranges.copy()
 
