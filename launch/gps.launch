@@ -2,6 +2,7 @@
   <!-- Mavros -->
   <arg name="ns" default="/"/>
   <arg name="fcu_url" default="/dev/ttyUSB0:500000"/>
+  <arg name="lidar_port" default="/dev/ttyUSB1"/>
   <arg name="gcs_url" default="udp://@192.168.102.4:14550" />
   <arg name="tgt_system" default="1" />
   <arg name="tgt_component" default="1" />
@@ -20,6 +21,8 @@
 
 
   <!-- Lidar-->
-  <include file="$(find navigation)/launch/my_lidar.launch"></include>
+  <include file="$(find navigation)/launch/my_lidar.launch">
+    <arg name="port" value="$(arg lidar_port)" />
+  </include>
 
 </launch>
