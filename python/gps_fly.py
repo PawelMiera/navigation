@@ -134,6 +134,9 @@ class RL_Fly(unittest.TestCase):
         self.laser_ranges = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
         self.laser_data = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
 
+        self.laser_ranges = preprocess_fast(self.laser_data, self.laser_resolution, self.laser_max_range,
+                                            self.laser_min_range)
+
         device = get_device("auto")
         saved_variables = torch.load("m_360_61_policy.zip", map_location=device)
 
