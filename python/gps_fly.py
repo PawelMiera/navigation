@@ -286,7 +286,7 @@ class RL_Fly(unittest.TestCase):
 
                     o_z = p_z + self.pos_z_i
 
-                    self.set_velocity(action[0], -action[1], 0, o)
+                    self.set_velocity(action[0], -action[1], 0, 0)
                     self.vel_local.header.stamp = rospy.Time.now()
                     self.vel_local_pub.publish(self.vel_local)
             except Exception as e:
@@ -411,9 +411,6 @@ class RL_Fly(unittest.TestCase):
         elif key == '2':
             self.set_arm(False, 5)
         elif key == '3':
-            self.set_arm(True, 5)
-            rospy.loginfo("Start_RL")
-            self.take_off(self.desired_heigth, 0, 20, 0.5)
             self.mode = Modes.RL
         if self.state.armed:
             if key == 't':
@@ -436,10 +433,10 @@ class RL_Fly(unittest.TestCase):
                 self.set_velocity(0, -0.3, 0, 0)
             elif key == 'z':
                 self.mode = Modes.TEST
-                self.set_velocity(0, 0, -0.5, 0)
+                self.set_velocity(0, 0, -0.7, 0)
             elif key == 'x':
                 self.mode = Modes.TEST
-                self.set_velocity(0, 0, 0.5, 0)
+                self.set_velocity(0, 0, 0.7, 0)
             elif key == 'e':
                 self.mode = Modes.TEST
                 self.set_velocity(0, 0, 0, 0.5)
