@@ -110,11 +110,11 @@ class RL_Fly(unittest.TestCase):
                                           self.state_callback)
 
         self.pos = PoseStamped()
-        self.mode = Modes.POSITION_CONTROL
+        self.mode = Modes.VELOCITY_CONTROL
 
         self.vel_local = PositionTarget()
 
-        self.set_velocity(0, 0, 0, 0)
+        self.set_velocity(0, 0, -1, 0)
 
         self.vel_local.type_mask = PositionTarget.IGNORE_YAW
 
@@ -124,15 +124,10 @@ class RL_Fly(unittest.TestCase):
         self.vel_local_pub = rospy.Publisher(
             '/mavros/setpoint_raw/local', PositionTarget, queue_size=1)
 
-        self.v_x = 0
-        self.v_y = 0
-        self.v_z = 0
-        self.v_yaw = 0
-        self.speed = 0.5
 
         _ = rospy.Subscriber('/scan', LaserScan, self.laser_callback)
 
-        self.laser_max_range = 10
+        self.laser_max_range = 6
         self.laser_min_range = 0.15
         self.laser_resolution = 360
 
