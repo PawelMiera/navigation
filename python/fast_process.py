@@ -22,6 +22,8 @@ def preprocess_fast(laser_ranges, laser_resolution, laser_max_range, laser_min_r
             if curr_sum != 0:
                 data2[i] = curr_sum / count
 
+            data2[i] = data2[i] - 0.1
+
             if data2[i] > laser_max_range:
                 data2[i] = laser_max_range
             elif data2[i] < laser_min_range:
