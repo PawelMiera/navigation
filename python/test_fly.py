@@ -214,16 +214,16 @@ class RL_Fly(unittest.TestCase):
         while not rospy.is_shutdown():
             try:
 
-                if self.local_position.pose.position.x == self.last_pos_x:
-                    self.pos_no_change_count += 1
-                else:
-                    self.pos_no_change_count = 0
-
-                if self.pos_no_change_count > 30:
-                    self.land()
-                    rospy.loginfo("Position estimate error, landing!")
-
-                self.last_pos_x = self.local_position.pose.position.x
+                # if self.local_position.pose.position.x == self.last_pos_x:
+                #     self.pos_no_change_count += 1
+                # else:
+                #     self.pos_no_change_count = 0
+                #
+                # if self.pos_no_change_count > 30:
+                #     self.land()
+                #     rospy.loginfo("Position estimate error, landing!")
+                #
+                # self.last_pos_x = self.local_position.pose.position.x
 
                 yaw = self.yaw_to_euler(self.local_position.pose.orientation.x,
                                         self.local_position.pose.orientation.y,
