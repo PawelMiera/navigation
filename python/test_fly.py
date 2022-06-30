@@ -50,14 +50,23 @@ class RL_Fly(unittest.TestCase):
         self.sub_topics_ready = {
             key: False
             for key in [
-                'state', 'local_pos'
+                'ext_state', 'state'
             ]
         }
 
         # ROS services
         service_timeout = 30
         rospy.loginfo("waiting for ROS services")
-
+        try:
+            rospy.wait_for_service('mavros/param/get', service_timeout)
+            rospy.wait_for_service('mavros/param/set', service_timeout)
+            rospy.wait_for_service('mavros/cmd/arming', service_timeout)
+            rospy.wait_for_service('mavros/mission/push', service_timeout)
+            rospy.wait_for_service('mavros/mission/clear', service_timeout)
+            rospy.wait_for_service('mavros/set_mode', service_timeout)
+            rospy.loginfo("ROS services are up")
+        except rospy.ROSException:
+            self.fail("failed to connect to services")
         self.get_param_srv = rospy.ServiceProxy('mavros/param/get', ParamGet)
         self.set_param_srv = rospy.ServiceProxy('mavros/param/set', ParamSet)
         self.set_arming_srv = rospy.ServiceProxy('mavros/cmd/arming',
@@ -101,7 +110,7 @@ class RL_Fly(unittest.TestCase):
                                           self.state_callback)
 
         self.pos = PoseStamped()
-        self.mode = Modes.RL
+        self.mode = Modes.VELOCITY_CONTROL
 
         self.vel_local = PositionTarget()
 
@@ -181,8 +190,6 @@ class RL_Fly(unittest.TestCase):
         return laser_ranges
 
     def laser_callback(self, msg):
-        if len(msg.ranges) != 360:
-            rospy.loginfo("laser size error")
         self.laser_data = np.array(msg.ranges).astype(np.float32)
 
     def yaw_to_euler(self, x, y, z, w):
@@ -268,6 +275,19 @@ class RL_Fly(unittest.TestCase):
                     action, _states = self.model.predict(obs, deterministic=True)
 
                     # rospy.loginfo(str(action))
+
+                    # e = self.desired_yaw - yaw
+                    # p = e * self.yaw_p
+                    # self.yaw_i += self.yaw_p_i * e * (1 / my_rate)
+                    #
+                    # o = p + self.yaw_i
+                    #
+                    # e_z = self.desired_heigth - self.local_position.pose.position.z
+                    #
+                    # p_z = e_z * self.pos_z_p
+                    # self.pos_z_i += self.pos_z_p_i * e_z * (1 / my_rate)
+                    #
+                    # o_z = p_z + self.pos_z_i
 
                     self.set_velocity(action[0], -action[1], 0, 0)
                     self.vel_local.header.stamp = rospy.Time.now()
@@ -443,7 +463,13 @@ class RL_Fly(unittest.TestCase):
         rospy.loginfo("RL example code is starting...")
         # make sure the simulation is ready to start the mission
         self.wait_for_topics(60)
-
+        self.wait_for_landed_state(mavutil.mavlink.MAV_LANDED_STATE_ON_GROUND,
+                                   10, -1)
+        self.log_topic_vars()
+        # exempting failsafe from lost RC to allow offboard
+        rcl_except = ParamValue(1 << 2, 0.0)
+        self.set_param("COM_RCL_EXCEPT", rcl_except, 5)
+        self.set_mode("OFFBOARD", 5)
 
         rospy.loginfo("run mission")
 
