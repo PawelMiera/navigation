@@ -270,6 +270,7 @@ class RL_Fly(unittest.TestCase):
                     self.laser_ranges = preprocess_fast(self.laser_data, self.laser_resolution, self.laser_max_range,
                                                         self.laser_min_range)
 
+                    rospy.loginfo("RL")
                     obs = self.normalize_lasers(self.laser_ranges)
 
                     action, _states = self.model.predict(obs, deterministic=True)
