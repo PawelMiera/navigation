@@ -463,8 +463,7 @@ class RL_Fly(unittest.TestCase):
         rospy.loginfo("RL example code is starting...")
         # make sure the simulation is ready to start the mission
         self.wait_for_topics(60)
-        self.wait_for_landed_state(mavutil.mavlink.MAV_LANDED_STATE_ON_GROUND,
-                                   10, -1)
+
         self.log_topic_vars()
         # exempting failsafe from lost RC to allow offboard
         rcl_except = ParamValue(1 << 2, 0.0)
