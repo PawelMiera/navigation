@@ -190,6 +190,7 @@ class RL_Fly(unittest.TestCase):
         return laser_ranges
 
     def laser_callback(self, msg):
+        rospy.loginfo("LASER " +str(len(msg.ranges)))
         self.laser_data = np.array(msg.ranges).astype(np.float32)
 
     def yaw_to_euler(self, x, y, z, w):
