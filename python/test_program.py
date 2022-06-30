@@ -57,16 +57,7 @@ class RL_Fly(unittest.TestCase):
         # ROS services
         service_timeout = 30
         rospy.loginfo("waiting for ROS services")
-        try:
-            rospy.wait_for_service('mavros/param/get', service_timeout)
-            rospy.wait_for_service('mavros/param/set', service_timeout)
-            rospy.wait_for_service('mavros/cmd/arming', service_timeout)
-            rospy.wait_for_service('mavros/mission/push', service_timeout)
-            rospy.wait_for_service('mavros/mission/clear', service_timeout)
-            rospy.wait_for_service('mavros/set_mode', service_timeout)
-            rospy.loginfo("ROS services are up")
-        except rospy.ROSException:
-            self.fail("failed to connect to services")
+
         self.get_param_srv = rospy.ServiceProxy('mavros/param/get', ParamGet)
         self.set_param_srv = rospy.ServiceProxy('mavros/param/set', ParamSet)
         self.set_arming_srv = rospy.ServiceProxy('mavros/cmd/arming',
