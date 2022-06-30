@@ -50,7 +50,7 @@ class RL_Fly(unittest.TestCase):
         self.sub_topics_ready = {
             key: False
             for key in [
-                'ext_state', 'state', 'local_pos'
+                'state', 'local_pos'
             ]
         }
 
@@ -110,7 +110,7 @@ class RL_Fly(unittest.TestCase):
                                           self.state_callback)
 
         self.pos = PoseStamped()
-        self.mode = Modes.VELOCITY_CONTROL
+        self.mode = Modes.RL
 
         self.vel_local = PositionTarget()
 
@@ -190,6 +190,8 @@ class RL_Fly(unittest.TestCase):
         return laser_ranges
 
     def laser_callback(self, msg):
+        if len(msg.ranges) != 360:
+            rospy.loginfo("laser size error")
         self.laser_data = np.array(msg.ranges).astype(np.float32)
 
     def yaw_to_euler(self, x, y, z, w):
@@ -275,19 +277,6 @@ class RL_Fly(unittest.TestCase):
                     action, _states = self.model.predict(obs, deterministic=True)
 
                     # rospy.loginfo(str(action))
-
-                    # e = self.desired_yaw - yaw
-                    # p = e * self.yaw_p
-                    # self.yaw_i += self.yaw_p_i * e * (1 / my_rate)
-                    #
-                    # o = p + self.yaw_i
-                    #
-                    # e_z = self.desired_heigth - self.local_position.pose.position.z
-                    #
-                    # p_z = e_z * self.pos_z_p
-                    # self.pos_z_i += self.pos_z_p_i * e_z * (1 / my_rate)
-                    #
-                    # o_z = p_z + self.pos_z_i
 
                     self.set_velocity(action[0], -action[1], 0, 0)
                     self.vel_local.header.stamp = rospy.Time.now()
