@@ -105,6 +105,7 @@ class RL_Fly(unittest.TestCase):
 
         self.last_pos_x = 0
         self.pos_no_change_count = 0
+        self.last_rl_control_time = rospy.Time.now()
 
         self.pos_setpoint_pub = rospy.Publisher(
             '/mavros/setpoint_position/local', PoseStamped, queue_size=1)
@@ -119,8 +120,8 @@ class RL_Fly(unittest.TestCase):
     def rl_control_callback(self, data):
         self.action = np.array(data.data)
 
-        rospy.loginfo(str(self.action[0]) + " xdddd " +str(self.action[1]))
-
+        rospy.loginfo(str(self.action[0]) + " xdddd " +str(self.action[1]) + "   " + str(rospy.Time.now() - self.last_rl_control_time))
+        self.last_rl_control_time = rospy.Time.now()
         if not self.sub_topics_ready['rl_control']:
             self.sub_topics_ready['rl_control'] = True
 
@@ -154,6 +155,8 @@ class RL_Fly(unittest.TestCase):
                 if self.pos_no_change_count > 30:
                     self.land()
                     rospy.loginfo("Position estimate error, landing!")
+                    continue
+                elif self.
 
                 self.last_pos_x = self.local_position.pose.position.x
 
