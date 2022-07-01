@@ -59,6 +59,7 @@ class RlNode:
         loop_rate = rospy.Rate(30)
         while not rospy.is_shutdown():
             if self.new_data:
+                rospy.loginfo("EXDD")
                 data = self.laser_data.copy()
                 data = np.subtract(data, 0.1)
 
