@@ -27,11 +27,11 @@ class RlNode:
         self.model.load_state_dict(saved_variables["state_dict"], strict=False)
         self.model.to(device)
 
-        self.pub = rospy.Publisher('/rl_control', Float32MultiArray, queue_size=1)
-        self.sub = rospy.Subscriber('/scan', LaserScan, self.laser_callback)
-
         laser_ranges = preprocess_fast_median(self.laser_data, self.laser_resolution, self.laser_max_range,
                                               self.laser_min_range)
+
+        self.pub = rospy.Publisher('/rl_control', Float32MultiArray, queue_size=1)
+        self.sub = rospy.Subscriber('/scan', LaserScan, self.laser_callback)
 
         rate = rospy.Rate(1)
 
@@ -57,14 +57,15 @@ class RlNode:
     def run(self):
 
         loop_rate = rospy.Rate(30)
+        rospy.loginfo("Node running!")
         while not rospy.is_shutdown():
             if self.new_data:
-                rospy.loginfo("EXDD")
+
                 data = self.laser_data.copy()
                 data = np.subtract(data, 0.1)
 
-                data = np.minimum(data, 6.0)
-                data = np.maximum(data, 0.15)
+                data = np.minimum(data, self.laser_max_range)
+                data = np.maximum(data, self.laser_min_range)
                 laser_ranges = preprocess_fast_median(data, self.laser_resolution, self.laser_max_range,
                                                       self.laser_min_range)
 
