@@ -30,6 +30,9 @@ class RlNode:
         self.pub = rospy.Publisher('/rl_control', Float32MultiArray, queue_size=1)
         self.sub = rospy.Subscriber('/scan', LaserScan, self.laser_callback)
 
+        laser_ranges = preprocess_fast_median(self.laser_data, self.laser_resolution, self.laser_max_range,
+                                              self.laser_min_range)
+
         rate = rospy.Rate(1)
 
         while not self.new_data:
@@ -52,45 +55,33 @@ class RlNode:
         return laser_ranges
 
     def run(self):
-        if self.new_data:
-            data = self.laser_data.copy()
-            data = np.subtract(data, 0.1)
 
-            data = np.minimum(data, 6.0)
-            data = np.maximum(data, 0.15)
-            laser_ranges = preprocess_fast_median(data, self.laser_resolution, self.laser_max_range,
-                                                  self.laser_min_range)
+        loop_rate = rospy.Rate(30)
+        while not rospy.is_shutdown():
+            if self.new_data:
+                data = self.laser_data.copy()
+                data = np.subtract(data, 0.1)
 
-            obs = self.normalize_lasers(laser_ranges)
+                data = np.minimum(data, 6.0)
+                data = np.maximum(data, 0.15)
+                laser_ranges = preprocess_fast_median(data, self.laser_resolution, self.laser_max_range,
+                                                      self.laser_min_range)
 
-            action, _states = self.model.predict(obs, deterministic=True)
+                obs = self.normalize_lasers(laser_ranges)
 
-            data_to_send = Float32MultiArray()  # the data to be sent, initialise the array
-            data_to_send.data = action  # assign the array with the value you want to send
-            self.pub.publish(data_to_send)
+                action, _states = self.model.predict(obs, deterministic=True)
 
+                data_to_send = Float32MultiArray()  # the data to be sent, initialise the array
+                data_to_send.data = action  # assign the array with the value you want to send
+                self.pub.publish(data_to_send)
 
-def main():
-    rospy.init_node('RL_Node', anonymous=True)
-    rlnode = RlNode()
-
-    loop_rate = rospy.Rate(30)
-
-    try:
-        while True:
-            try:
-                rlnode.run()
-                rospy.loginfo("XD")
-            except KeyboardInterrupt:
-                rospy.loginfo("Shutting down2")
-            try:  # prevent garbage in console output when thread is killed
-                loop_rate.sleep()
-            except rospy.ROSInterruptException:
-                pass
-
-    except KeyboardInterrupt:
-        rospy.loginfo("Shutting down")
+                try:  # prevent garbage in console output when thread is killed
+                    loop_rate.sleep()
+                except rospy.ROSInterruptException:
+                    pass
 
 
 if __name__ == '__main__':
-    main()
+    rospy.init_node('RL_Node', anonymous=True)
+    rlnode = RlNode()
+    rlnode.run()
