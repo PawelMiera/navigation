@@ -79,7 +79,7 @@ def main():
     try:
         while True:
             rlnode.run()
-
+            rospy.loginfo("XD")
             try:  # prevent garbage in console output when thread is killed
                 loop_rate.sleep()
             except rospy.ROSInterruptException:
