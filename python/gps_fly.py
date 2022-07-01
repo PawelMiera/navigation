@@ -267,7 +267,12 @@ class RL_Fly(unittest.TestCase):
                     self.vel_local_pub.publish(self.vel_local)
 
                 elif self.mode == Modes.RL:
-                    self.laser_ranges = preprocess_fast_median(self.laser_data, self.laser_resolution, self.laser_max_range,
+                    data = self.laser_data.copy()
+                    data = np.subtract(data, 0.1)
+
+                    data = np.minimum(data, 6.0)
+                    data = np.maximum(data, 0.15)
+                    self.laser_ranges = preprocess_fast_median(data, self.laser_resolution, self.laser_max_range,
                                                         self.laser_min_range)
 
                     obs = self.normalize_lasers(self.laser_ranges)
