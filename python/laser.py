@@ -4,6 +4,7 @@ import cv2
 from math import pi, sin, cos
 import numpy as np
 from slow_process import preprocess_slow_median
+import os
 
 class Laser:
     def __init__(self):
@@ -20,6 +21,9 @@ class Laser:
         rospy.init_node('scan_values')
         sub = rospy.Subscriber('/scan', LaserScan, self.laser_callback)
 
+        self.start_save = False
+        self.save_ind = 0
+
         while True:
             self.laser_ranges = preprocess_slow_median(self.laser_data, self.laser_resolution, self.laser_max_range,
                                                 self.laser_min_range)
@@ -27,9 +31,18 @@ class Laser:
             key = self.render()
             if key == ord("q"):
                 break
+            elif key == ord("s"):
+                self.start_save =True
+                print("saving")
+                if not os.path.exists:
+                    os.mkdir("saved")
+
 
     def laser_callback(self, msg):
         self.laser_data = np.array(msg.ranges).astype(np.float32)
+        if self.start_save:
+            np.save("saved" + str(self.save_ind) + ".npz")
+            self.save_ind += 1
         print(len(self.laser_data))
 
 
