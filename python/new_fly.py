@@ -9,7 +9,6 @@ import numpy as np
 from pymavlink import mavutil
 from six.moves import xrange
 
-
 import rospy
 from geometry_msgs.msg import PoseStamped, Quaternion
 from mavros_msgs.msg import ExtendedState, State
@@ -51,8 +50,6 @@ class RL_Fly(unittest.TestCase):
             ]
         }
 
-        _ = rospy.Subscriber('/rl_control', Float32MultiArray, self.rl_control_callback)
-
         # ROS services
         service_timeout = 30
         rospy.loginfo("waiting for ROS services")
@@ -82,15 +79,14 @@ class RL_Fly(unittest.TestCase):
                                               ExtendedState,
                                               self.extended_state_callback)
 
-
         self.local_pos_sub = rospy.Subscriber('mavros/local_position/pose',
                                               PoseStamped,
                                               self.local_position_callback)
 
-
-
         self.state_sub = rospy.Subscriber('mavros/state', State,
                                           self.state_callback)
+
+        self.rl_control_sub = rospy.Subscriber('/rl_control', Float32MultiArray, self.rl_control_callback)
 
         self.pos = PoseStamped()
         self.mode = Modes.VELOCITY_CONTROL
@@ -118,9 +114,8 @@ class RL_Fly(unittest.TestCase):
         self.drone_control_thread.start()
 
     def rl_control_callback(self, data):
-        self.action = np.array(data.data)
+        self.action = np.array(data.data).astype(np.float32)
 
-        rospy.loginfo(str(self.action[0]) + " xdddd " +str(self.action[1]) + "   " + str(rospy.get_rostime().secs - self.last_rl_control_time > 1))
         self.last_rl_control_time = rospy.get_rostime().secs
         if not self.sub_topics_ready['rl_control']:
             self.sub_topics_ready['rl_control'] = True
@@ -172,8 +167,10 @@ class RL_Fly(unittest.TestCase):
                     rospy.loginfo("x: " + str(round(self.local_position.pose.position.x, 2)) +
                                   " y: " + str(round(self.local_position.pose.position.y, 2)) + " z: "
                                   + str(round(self.local_position.pose.position.z, 2)) + " yaw: " + str(round(yaw, 2)) +
-                                  " rx: " + str(round(self.vel_local.velocity.x, 2)) + " ry: " + str(round(self.vel_local.velocity.y,2)) +
-                                  " rz: " + str(round(self.vel_local.velocity.z, 2)) + " y_rate: " + str(round(self.vel_local.yaw_rate,2)))
+                                  " rx: " + str(round(self.vel_local.velocity.x, 2)) + " ry: " + str(
+                        round(self.vel_local.velocity.y, 2)) +
+                                  " rz: " + str(round(self.vel_local.velocity.z, 2)) + " y_rate: " + str(
+                        round(self.vel_local.yaw_rate, 2)))
 
                 if self.mode == Modes.POSITION_CONTROL:
                     self.pos.header.stamp = rospy.Time.now()
@@ -357,7 +354,7 @@ class RL_Fly(unittest.TestCase):
         """Test offboard position control"""
         rospy.loginfo("RL example code is starting...")
         # make sure the simulation is ready to start the mission
-        self.wait_for_topics(60)
+        self.wait_for_topics(10)
         self.wait_for_landed_state(mavutil.mavlink.MAV_LANDED_STATE_ON_GROUND,
                                    10, -1)
         self.log_topic_vars()
