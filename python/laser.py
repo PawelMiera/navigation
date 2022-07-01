@@ -41,7 +41,7 @@ class Laser:
     def laser_callback(self, msg):
         self.laser_data = np.array(msg.ranges).astype(np.float32)
         if self.start_save:
-            np.save("saved" + str(self.save_ind) + ".npz")
+            np.save("saved" + str(self.save_ind) + ".npz", self.laser_data)
             self.save_ind += 1
         print(len(self.laser_data))
 
