@@ -104,6 +104,7 @@ class RL_Fly(unittest.TestCase):
         self.vel_local.type_mask = PositionTarget.IGNORE_YAW
 
         self.last_pos_x = 0
+        self.pos_no_change_count = 0
 
         self.pos_setpoint_pub = rospy.Publisher(
             '/mavros/setpoint_position/local', PoseStamped, queue_size=1)
@@ -118,7 +119,7 @@ class RL_Fly(unittest.TestCase):
     def rl_control_callback(self, data):
         self.action = np.array(data.data)
 
-        rospy.loginfo(self.action)
+        rospy.loginfo(str(self.action))
 
         if not self.sub_topics_ready['rl_control']:
             self.sub_topics_ready['rl_control'] = True
