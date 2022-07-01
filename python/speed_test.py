@@ -5,7 +5,7 @@ from sensor_msgs.msg import LaserScan
 #import cv2
 from math import pi, sin, cos
 import numpy as np
-from fast_process import preprocess_fast
+from fast_process import preprocess_fast_median
 
 class Laser:
     def __init__(self):
@@ -24,7 +24,7 @@ class Laser:
 
         while True:
             start = time.time()
-            self.laser_ranges = preprocess_fast(self.laser_data, self.laser_resolution, self.laser_max_range,
+            self.laser_ranges = preprocess_fast_median(self.laser_data, self.laser_resolution, self.laser_max_range,
                                                 self.laser_min_range)
             print(time.time() - start)
             #key = self.render()

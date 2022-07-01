@@ -21,7 +21,7 @@ from mavros_msgs.srv import CommandBool, ParamGet, ParamSet, SetMode, WaypointCl
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Header
 from tf.transformations import quaternion_from_euler
-from fast_process import preprocess_fast
+from fast_process import preprocess_fast_median
 
 
 class Modes:
@@ -134,7 +134,7 @@ class RL_Fly(unittest.TestCase):
         self.laser_ranges = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
         self.laser_data = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
 
-        self.laser_ranges = preprocess_fast(self.laser_data, self.laser_resolution, self.laser_max_range,
+        self.laser_ranges = preprocess_fast_median(self.laser_data, self.laser_resolution, self.laser_max_range,
                                             self.laser_min_range)
 
         device = get_device("auto")
@@ -267,7 +267,7 @@ class RL_Fly(unittest.TestCase):
                     self.vel_local_pub.publish(self.vel_local)
 
                 elif self.mode == Modes.RL:
-                    self.laser_ranges = preprocess_fast(self.laser_data, self.laser_resolution, self.laser_max_range,
+                    self.laser_ranges = preprocess_fast_median(self.laser_data, self.laser_resolution, self.laser_max_range,
                                                         self.laser_min_range)
 
                     obs = self.normalize_lasers(self.laser_ranges)

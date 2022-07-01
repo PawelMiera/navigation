@@ -3,7 +3,7 @@ from sensor_msgs.msg import LaserScan
 import cv2
 from math import pi, sin, cos
 import numpy as np
-from slow_process import preprocess_slow
+from slow_process import preprocess_slow_median
 
 class Laser:
     def __init__(self):
@@ -21,7 +21,7 @@ class Laser:
         sub = rospy.Subscriber('/scan', LaserScan, self.laser_callback)
 
         while True:
-            self.laser_ranges = preprocess_slow(self.laser_data, self.laser_resolution, self.laser_max_range,
+            self.laser_ranges = preprocess_slow_median(self.laser_data, self.laser_resolution, self.laser_max_range,
                                                 self.laser_min_range)
 
             key = self.render()
