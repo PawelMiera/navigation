@@ -103,6 +103,8 @@ class RL_Fly(unittest.TestCase):
 
         self.vel_local.type_mask = PositionTarget.IGNORE_YAW
 
+        self.last_pos_x = 0
+
         self.pos_setpoint_pub = rospy.Publisher(
             '/mavros/setpoint_position/local', PoseStamped, queue_size=1)
 
