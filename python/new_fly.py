@@ -6,7 +6,6 @@ import unittest
 from threading import Thread
 
 import numpy as np
-import torch
 from pymavlink import mavutil
 from six.moves import xrange
 
@@ -17,7 +16,7 @@ from mavros_msgs.msg import ExtendedState, State
 from mavros_msgs.msg import ParamValue, PositionTarget
 from mavros_msgs.srv import CommandBool, ParamGet, ParamSet, SetMode, WaypointClear, \
     WaypointPush
-from sensor_msgs.msg import LaserScan
+
 from std_msgs.msg import Header
 from tf.transformations import quaternion_from_euler
 from std_msgs.msg import Float32MultiArray
