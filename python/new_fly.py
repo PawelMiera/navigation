@@ -52,6 +52,8 @@ class RL_Fly(unittest.TestCase):
             ]
         }
 
+        _ = rospy.Subscriber('/rl_control', Float32MultiArray, self.rl_control_callback)
+
         # ROS services
         service_timeout = 30
         rospy.loginfo("waiting for ROS services")
@@ -108,14 +110,14 @@ class RL_Fly(unittest.TestCase):
         self.vel_local_pub = rospy.Publisher(
             '/mavros/setpoint_raw/local', PositionTarget, queue_size=1)
 
-        _ = rospy.Subscriber('/rl_control', Float32MultiArray, self.rl_control_callback)
-
         self.drone_control_thread = Thread(target=self.control_drone, args=())
         self.drone_control_thread.daemon = True
         self.drone_control_thread.start()
 
     def rl_control_callback(self, data):
         self.action = np.array(data.data)
+
+        rospy.loginfo(self.action)
 
         if not self.sub_topics_ready['rl_control']:
             self.sub_topics_ready['rl_control'] = True
