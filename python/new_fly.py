@@ -120,7 +120,7 @@ class RL_Fly(unittest.TestCase):
     def rl_control_callback(self, data):
         self.action = np.array(data.data)
 
-        rospy.loginfo(str(self.action[0]) + " xdddd " +str(self.action[1]) + "   " + str(rospy.get_rostime().secs - self.last_rl_control_time))
+        rospy.loginfo(str(self.action[0]) + " xdddd " +str(self.action[1]) + "   " + str(rospy.get_rostime().secs - self.last_rl_control_time > 1))
         self.last_rl_control_time = rospy.get_rostime().secs
         if not self.sub_topics_ready['rl_control']:
             self.sub_topics_ready['rl_control'] = True
