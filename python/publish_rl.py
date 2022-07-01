@@ -78,15 +78,18 @@ def main():
 
     try:
         while True:
-            rlnode.run()
-            rospy.loginfo("XD")
+            try:
+                rlnode.run()
+                rospy.loginfo("XD")
+            except KeyboardInterrupt:
+                rospy.loginfo("Shutting down2")
             try:  # prevent garbage in console output when thread is killed
                 loop_rate.sleep()
             except rospy.ROSInterruptException:
                 pass
 
     except KeyboardInterrupt:
-        print("Shutting down")
+        rospy.loginfo("Shutting down")
 
 
 if __name__ == '__main__':
