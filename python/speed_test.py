@@ -21,19 +21,26 @@ class Laser:
         self.laser_data = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
         rospy.init_node('scan_values')
         sub = rospy.Subscriber('/scan', LaserScan, self.laser_callback)
+        self.exit = False
 
         while True:
             start = time.time()
             self.laser_ranges = preprocess_fast_median(self.laser_data, self.laser_resolution, self.laser_max_range,
                                                 self.laser_min_range)
             print(time.time() - start)
+
+            if self.exit:
+                break
             #key = self.render()
             #if key == ord("q"):
             #    break
 
     def laser_callback(self, msg):
-        self.laser_data = np.array(msg.ranges).astype(np.float32)
-        print(len(self.laser_data))
+        try:
+            self.laser_data = np.array(msg.ranges).astype(np.float32)
+            print(len(self.laser_data))
+        except KeyboardInterrupt:
+            self.exit = True
 
 
     def preprocess_lasers2(self):

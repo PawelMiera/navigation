@@ -78,7 +78,7 @@ def preprocess_fast_median(laser_ranges, laser_resolution, laser_max_range, lase
 
     for i in range(laser_resolution):
         values_list = []
-        for j in range(i - 2, i + 3):
+        for j in range(i - 4, i + 5):
             ind = j
             if j < 0:
                 ind = laser_resolution + j
@@ -89,10 +89,12 @@ def preprocess_fast_median(laser_ranges, laser_resolution, laser_max_range, lase
 
         values_list = sorted(values_list)
 
-        out_data[i] = values_list[2] - 0.1
+        out_data[i] = values_list[4] - 0.1
 
         if out_data[i] < laser_min_range:
             out_data[i] = laser_min_range
+
+    return out_data
 
     return out_data
 
