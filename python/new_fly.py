@@ -156,7 +156,10 @@ class RL_Fly(unittest.TestCase):
                     self.land()
                     rospy.loginfo("Position estimate error, landing!")
                     continue
-                elif self.
+                elif rospy.Time.now() - self.last_rl_control_time > 1:
+                    self.land()
+                    rospy.loginfo("Control time error, landing!")
+                    continue
 
                 self.last_pos_x = self.local_position.pose.position.x
 
