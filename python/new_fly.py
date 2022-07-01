@@ -20,6 +20,7 @@ from mavros_msgs.srv import CommandBool, ParamGet, ParamSet, SetMode, WaypointCl
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Header
 from tf.transformations import quaternion_from_euler
+from std_msgs.msg import Float32MultiArray
 
 
 class Modes:
@@ -107,14 +108,14 @@ class RL_Fly(unittest.TestCase):
         self.vel_local_pub = rospy.Publisher(
             '/mavros/setpoint_raw/local', PositionTarget, queue_size=1)
 
-        _ = rospy.Subscriber('/rl_control', LaserScan, self.rl_control_callback)
+        _ = rospy.Subscriber('/rl_control', Float32MultiArray, self.rl_control_callback)
 
         self.drone_control_thread = Thread(target=self.control_drone, args=())
         self.drone_control_thread.daemon = True
         self.drone_control_thread.start()
 
     def rl_control_callback(self, data):
-        self.action = data
+        self.action = np.array(data.data)
 
         if not self.sub_topics_ready['rl_control']:
             self.sub_topics_ready['rl_control'] = True
@@ -173,7 +174,7 @@ class RL_Fly(unittest.TestCase):
 
                 elif self.mode == Modes.RL:
 
-                    self.set_velocity(action[0], -action[1], 0, 0)
+                    self.set_velocity(self.action[0], -self.action[1], 0, 0)
                     self.vel_local.header.stamp = rospy.Time.now()
                     self.vel_local_pub.publish(self.vel_local)
             except Exception as e:

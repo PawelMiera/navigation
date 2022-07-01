@@ -71,8 +71,8 @@ class RlNode:
 
 
 def main():
-    rlnode = RlNode()
     rospy.init_node('RL_Node', anonymous=True)
+    rlnode = RlNode()
 
     loop_rate = rospy.Rate(30)
 
