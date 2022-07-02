@@ -366,7 +366,7 @@ class RL_Fly(unittest.TestCase):
         rospy.loginfo("run mission")
 
         while True:
-            key = input("Set new command!\n")
+            key = raw_input("Set new command!\n")
             ret = self.on_release(key)
             if ret:
                 break
