@@ -22,6 +22,9 @@ class RlNode:
 
         self.corrupt_size = 0
 
+        self.corrupt_ind = 0
+
+
         device = get_device("auto")
         saved_variables = torch.load("m_360_61_policy.zip", map_location=device)
 
@@ -49,11 +52,19 @@ class RlNode:
             rospy.loginfo(str(len(msg.ranges)))
         self.ind += 1
         if len(msg.ranges) == 360:
+            self.corrupt_ind = 0
             self.new_data = True
             self.laser_data = np.array(msg.ranges).astype(np.float32)
         else:
             self.corrupt_size += 1
+            self.corrupt_ind += 1
             rospy.loginfo("corrupt data size " + str(self.corrupt_size) + " / " + str(self.ind))
+
+        if self.corrupt_ind > 20:
+            data_to_send = Float32MultiArray()
+            data_to_send.data = np.array([0, 0])
+            self.pub.publish(data_to_send)
+            rospy.loginfo("stopping vehicle!")
 
     def normalize_lasers(self, laser_ranges):
         divider = self.laser_max_range / 2

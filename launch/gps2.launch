@@ -26,6 +26,6 @@
   </include>
 
    <node pkg="rosbag" type="record" name="rosbag_record_diag"
-       args="record -o bags /scan /mavros/local_position/pose mavros/state"/>
+       args="record -o bags /scan /mavros/local_position/pose mavros/state /rl_control"/>
 
 </launch>
