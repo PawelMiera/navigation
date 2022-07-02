@@ -3,7 +3,7 @@
   <arg name="ns" default="/"/>
   <arg name="fcu_url" default="/dev/ttyUSB1:500000"/>
   <arg name="lidar_port" default="/dev/ttyUSB0"/>
-  <arg name="gcs_url" default="udp://@192.168.102.4:14550" />
+  <arg name="gcs_url" default="udp://@192.168.54.4:14550" />
   <arg name="tgt_system" default="1" />
   <arg name="tgt_component" default="1" />
 
