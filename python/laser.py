@@ -6,6 +6,7 @@ import numpy as np
 from slow_process import preprocess_slow_median
 import os
 
+
 class Laser:
     def __init__(self):
         self.window_size = (900, 900)
@@ -24,6 +25,8 @@ class Laser:
         self.start_save = False
         self.save_ind = 0
 
+        self.corrupt_size = 0
+
         while True:
             data = self.laser_data.copy()
             data = np.subtract(data, 0.1)
@@ -31,25 +34,28 @@ class Laser:
             data = np.minimum(data, self.laser_max_range)
             data = np.maximum(data, self.laser_min_range)
             self.laser_ranges = preprocess_slow_median(data, self.laser_resolution, self.laser_max_range,
-                                                  self.laser_min_range)
+                                                       self.laser_min_range)
 
             key = self.render()
             if key == ord("q"):
                 break
             elif key == ord("s"):
-                self.start_save =True
+                self.start_save = True
                 print("saving")
                 if not os.path.exists:
                     os.mkdir("saved")
 
-
     def laser_callback(self, msg):
-        self.laser_data = np.array(msg.ranges).astype(np.float32)
+        if len(msg.ranges) == 360:
+            self.new_data = True
+            self.laser_data = np.array(msg.ranges).astype(np.float32)
+            print(len(self.laser_data))
+        else:
+            self.corrupt_size += 1
+            print("corrupt data size " + str(self.corrupt_size))
         if self.start_save:
             np.save("saved/" + str(self.save_ind) + ".npz", self.laser_data)
             self.save_ind += 1
-        print(len(self.laser_data))
-
 
     def preprocess_lasers2(self):
         data = self.laser_data.copy()
@@ -57,19 +63,19 @@ class Laser:
         mask = np.isinf(data)
         mask_min = data < self.laser_min_range + 0.2
 
-        #print("max: ", np.max(data[np.logical_not(mask)]), " min ", np.min(data))
+        # print("max: ", np.max(data[np.logical_not(mask)]), " min ", np.min(data))
 
         data = np.maximum(data, self.laser_min_range)
         data = np.minimum(data, self.laser_max_range)
 
-        #print(data[np.logical_not(mask)])
+        # print(data[np.logical_not(mask)])
 
-        out_list = [np.array([data[self.laser_resolution-1], data[1]])]
+        out_list = [np.array([data[self.laser_resolution - 1], data[1]])]
         for i in range(1, self.laser_resolution - 1):
-            curr = np.concatenate([data[i - 1:i], data[i+1:i + 2]])
+            curr = np.concatenate([data[i - 1:i], data[i + 1:i + 2]])
             out_list.append(curr)
 
-        out_list.append([data[self.laser_resolution-2], data[0]])
+        out_list.append([data[self.laser_resolution - 2], data[0]])
 
         neighbours_closest_min = np.min(out_list, axis=1)
 
@@ -78,7 +84,7 @@ class Laser:
         data[mask_min] = neighbours_closest_max[mask_min]
         data[mask] = neighbours_closest_min[mask]
 
-        #print("2max: ", np.max(data), " min ", np.min(data))qq
+        # print("2max: ", np.max(data), " min ", np.min(data))qq
 
     def preprocess_lasers(self):
         data = self.laser_data.copy()
