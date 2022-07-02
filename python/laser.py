@@ -25,8 +25,13 @@ class Laser:
         self.save_ind = 0
 
         while True:
-            self.laser_ranges = preprocess_slow_median(self.laser_data, self.laser_resolution, self.laser_max_range,
-                                                self.laser_min_range)
+            data = self.laser_data.copy()
+            data = np.subtract(data, 0.1)
+
+            data = np.minimum(data, self.laser_max_range)
+            data = np.maximum(data, self.laser_min_range)
+            self.laser_ranges = preprocess_slow_median(data, self.laser_resolution, self.laser_max_range,
+                                                  self.laser_min_range)
 
             key = self.render()
             if key == ord("q"):
