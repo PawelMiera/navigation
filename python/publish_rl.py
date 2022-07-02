@@ -60,22 +60,24 @@ class RlNode:
         rospy.loginfo("Node running!")
         while not rospy.is_shutdown():
             if self.new_data:
+                if len(self.laser_data) == 360:
+                    data = self.laser_data.copy()
+                    data = np.subtract(data, 0.1)
 
-                data = self.laser_data.copy()
-                data = np.subtract(data, 0.1)
+                    data = np.minimum(data, self.laser_max_range)
+                    data = np.maximum(data, self.laser_min_range)
+                    laser_ranges = preprocess_fast_median(data, self.laser_resolution, self.laser_max_range,
+                                                          self.laser_min_range)
 
-                data = np.minimum(data, self.laser_max_range)
-                data = np.maximum(data, self.laser_min_range)
-                laser_ranges = preprocess_fast_median(data, self.laser_resolution, self.laser_max_range,
-                                                      self.laser_min_range)
+                    obs = self.normalize_lasers(laser_ranges)
 
-                obs = self.normalize_lasers(laser_ranges)
+                    action, _states = self.model.predict(obs, deterministic=True)
 
-                action, _states = self.model.predict(obs, deterministic=True)
-
-                data_to_send = Float32MultiArray()  # the data to be sent, initialise the array
-                data_to_send.data = action  # assign the array with the value you want to send
-                self.pub.publish(data_to_send)
+                    data_to_send = Float32MultiArray()  # the data to be sent, initialise the array
+                    data_to_send.data = action  # assign the array with the value you want to send
+                    self.pub.publish(data_to_send)
+                else:
+                    rospy.loginfo("corrupt data size")
 
                 try:  # prevent garbage in console output when thread is killed
                     loop_rate.sleep()
