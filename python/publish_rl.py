@@ -79,10 +79,10 @@ class RlNode:
                 else:
                     rospy.loginfo("corrupt data size")
 
-                try:  # prevent garbage in console output when thread is killed
-                    loop_rate.sleep()
-                except rospy.ROSInterruptException:
-                    pass
+            try:  # prevent garbage in console output when thread is killed
+                loop_rate.sleep()
+            except rospy.ROSInterruptException:
+                pass
 
 
 if __name__ == '__main__':
