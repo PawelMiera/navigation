@@ -80,7 +80,7 @@ class RlNode:
                 self.new_data = False
 
                 data = self.laser_data.copy()
-                data = np.subtract(data, 0.1)
+                data = np.subtract(data, 0.2)
 
                 data = np.minimum(data, self.laser_max_range)
                 data = np.maximum(data, self.laser_min_range)
