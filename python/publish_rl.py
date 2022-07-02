@@ -20,6 +20,8 @@ class RlNode:
         self.laser_resolution = 360
         self.laser_data = np.full(self.laser_resolution, self.laser_max_range, dtype=np.float32)
 
+        self.corrupt_size = 0
+
         device = get_device("auto")
         saved_variables = torch.load("m_360_61_policy.zip", map_location=device)
 
@@ -46,8 +48,12 @@ class RlNode:
         if self.ind % 30 == 0:
             rospy.loginfo(str(len(msg.ranges)))
         self.ind += 1
-        self.new_data = True
-        self.laser_data = np.array(msg.ranges).astype(np.float32)
+        if len(msg.ranges) == 360:
+            self.new_data = True
+            self.laser_data = np.array(msg.ranges).astype(np.float32)
+        else:
+            self.corrupt_size += 1
+            rospy.loginfo("corrupt data size " + str(self.corrupt_size) + " / " + str(self.ind))
 
     def normalize_lasers(self, laser_ranges):
         divider = self.laser_max_range / 2
@@ -61,25 +67,23 @@ class RlNode:
         while not rospy.is_shutdown():
             if self.new_data:
                 self.new_data = False
-                if len(self.laser_data) == 360:
-                    data = self.laser_data.copy()
-                    data = np.subtract(data, 0.1)
 
-                    data = np.minimum(data, self.laser_max_range)
-                    data = np.maximum(data, self.laser_min_range)
-                    laser_ranges = preprocess_fast_median(data, self.laser_resolution, self.laser_max_range,
-                                                          self.laser_min_range)
+                data = self.laser_data.copy()
+                data = np.subtract(data, 0.1)
 
-                    obs = self.normalize_lasers(laser_ranges)
+                data = np.minimum(data, self.laser_max_range)
+                data = np.maximum(data, self.laser_min_range)
+                laser_ranges = preprocess_fast_median(data, self.laser_resolution, self.laser_max_range,
+                                                      self.laser_min_range)
 
-                    action, _states = self.model.predict(obs, deterministic=True)
+                obs = self.normalize_lasers(laser_ranges)
 
-                    data_to_send = Float32MultiArray()  # the data to be sent, initialise the array
-                    data_to_send.data = action  # assign the array with the value you want to send
-                    self.pub.publish(data_to_send)
+                action, _states = self.model.predict(obs, deterministic=True)
 
-                else:
-                    rospy.loginfo("corrupt data size")
+                data_to_send = Float32MultiArray()  # the data to be sent, initialise the array
+                data_to_send.data = action  # assign the array with the value you want to send
+                self.pub.publish(data_to_send)
+
 
             try:  # prevent garbage in console output when thread is killed
                 loop_rate.sleep()
